@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="pt-br"><head><meta charset="UTF-8"><title>Expedição</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+<body><div class="container">{% include '_menu.html' %}
+<div class="page-heading"><span class="eyebrow">Pedidos das lojas</span><h1>Expedição e Romaneios</h1><p>Separe por origem, confira, imprima as duas vias e acompanhe o retorno do motorista.</p></div>
+<div class="painel-produto-detalhes painel-romaneio-resumo">
+<div class="card-detalhe-produto"><span>Pedidos em andamento</span><strong>{{ total_pendentes }}</strong></div>
+<div class="card-detalhe-produto"><span>Em preparação</span><strong>{{ resumo_romaneios.get('Em preparação', 0) }}</strong></div>
+<div class="card-detalhe-produto"><span>Conferidos</span><strong>{{ resumo_romaneios.get('Conferido', 0) }}</strong></div>
+<div class="card-detalhe-produto"><span>Em rota</span><strong>{{ resumo_romaneios.get('Em rota', 0) }}</strong></div>
+</div>
+<form method="GET" class="topo"><div class="campo-topo"><label>Origem</label><select name="origem_id"><option value="">Todas</option>{% for origem in origens %}<option value="{{ origem.id }}" {% if origem_id|string == origem.id|string %}selected{% endif %}>{{ origem.nome }}</option>{% endfor %}</select></div><div class="campo-topo"><label>Status do pedido</label><select name="status"><option value="">Todos</option>{% for st in status_opcoes %}<option value="{{ st }}" {% if status_filtro == st %}selected{% endif %}>{{ st }}</option>{% endfor %}</select></div><button>Filtrar</button><a href="/expedicao/origens" class="btn-link-metas">Origens</a><a href="/lojas" class="btn-link-metas">Lojas</a><a href="/expedicao/motoristas" class="btn-link-metas">Motoristas</a><a href="/expedicao/veiculos" class="btn-link-metas">Veículos</a></form>
+<div class="expedicao-grid">{% for pedido in pedidos %}<a href="/expedicao/pedidos/{{ pedido.id }}" class="expedicao-card"><div class="expedicao-card-top"><span>Pedido #{{ pedido.id }}</span><span class="badge-status">{{ pedido.status }}</span></div><h2>{{ pedido.loja_nome }}</h2><p>Entrega: {{ pedido.data_entrega_desejada or 'não informada' }}</p><div class="progress-loja"><span style="width: {{ ((pedido.separados + pedido.indisponiveis) / pedido.total_itens * 100) if pedido.total_itens else 0 }}%"></span></div><small>{{ pedido.separados + pedido.indisponiveis }}/{{ pedido.total_itens }} itens tratados</small>{% if pedido.romaneio_id %}<div class="romaneio-card-status"><strong>{{ pedido.romaneio_codigo }}</strong><span>{{ pedido.romaneio_status }}</span></div>{% endif %}</a>{% else %}<div class="empty-state">Nenhum pedido para os filtros selecionados.</div>{% endfor %}</div>
+</div></body></html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Transferências Internas - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean">
+    {% include '_menu.html' %}
+    <section class="dashboard-resumo modulo-hero-clean">
+        <div>
+            <span class="eyebrow">Estoque • Fluxo interno</span>
+            <h1>Transferências Internas</h1>
+            <p>Transfira materiais entre o estoque central e as células sem registrar consumo antes da hora.</p>
+        </div>
+    </section>
+
+    <form method="GET" class="card-usuario filtros-grade">
+        <div class="campo-form"><label>Status</label><select name="status"><option value="">Todos</option>{% for opcao in status_opcoes %}<option value="{{ opcao }}" {% if status == opcao %}selected{% endif %}>{{ opcao }}</option>{% endfor %}</select></div>
+        <div class="campo-form"><label>Tipo</label><select name="tipo"><option value="">Todos</option>{% for opcao in tipos %}<option value="{{ opcao }}" {% if tipo == opcao %}selected{% endif %}>{{ opcao }}</option>{% endfor %}</select></div>
+        <div class="campo-form"><label>Célula</label><select name="celula_id"><option value="">Todas</option>{% for celula in celulas %}<option value="{{ celula.id }}" {% if celula_id == celula.id|string %}selected{% endif %}>{{ celula.nome }}</option>{% endfor %}</select></div>
+        <div class="campo-form campo-acao-final"><button type="submit">Filtrar</button></div>
+    </form>
+
+    <div class="botoes-metas">
+        <a href="/estoque/transferencias/nova" class="btn-link-metas">Nova transferência manual</a>
+        <a href="/estoque/celulas/saldos" class="btn-link-metas">Saldos por célula</a>
+        <a href="/estoque/celulas" class="btn-link-metas">Células</a>
+        <a href="/estoque" class="btn-link-avulsas">Voltar</a>
+    </div>
+
+    <section class="card-usuario">
+        {% if transferencias %}
+        <div class="tabela-responsiva"><table>
+            <thead><tr><th>#</th><th>Tipo</th><th>Origem</th><th>Destino</th><th>Separação</th><th>Itens</th><th>Status</th><th>Criada</th><th>Ação</th></tr></thead>
+            <tbody>
+            {% for t in transferencias %}
+            <tr>
+                <td>{{ t.id }}</td>
+                <td>{{ t.tipo }}</td>
+                <td>{{ t.celula_origem_nome or 'Estoque Central' }}</td>
+                <td>{{ t.celula_destino_nome or 'Estoque Central' }}</td>
+                <td>{% if t.separacao_id %}#{{ t.separacao_id }}{% else %}-{% endif %}</td>
+                <td>{{ t.total_itens }}</td>
+                <td><span class="badge-status {% if t.status == 'Confirmada' %}status-ok{% elif t.status == 'Cancelada' %}status-erro{% else %}status-aviso{% endif %}">{{ t.status }}</span></td>
+                <td>{{ t.data_criacao }}</td>
+                <td><a href="/estoque/transferencias/{{ t.id }}" class="btn-mini">Abrir</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table></div>
+        {% else %}<div class="mensagem-aviso">Nenhuma transferência encontrada.</div>{% endif %}
+    </section>
+</div>
+</body>
+</html>

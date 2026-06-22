@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Histórico de Produções</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+
+    <div class="container">
+
+        {% include '_menu.html' %}
+
+        <h1>Histórico de Produções</h1>
+
+        <div class="botoes-metas">
+            <a href="/dashboard" class="btn-link-avulsas">Voltar</a>
+        </div>
+
+        {% if producoes %}
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Data/Hora</th>
+                    <th>Cenário</th>
+                    <th>Dia da Semana</th>
+                    <th>Total Tabuleiros</th>
+                    <th>Total Empadas</th>
+                    <th>Detalhes</th>
+                    <th>Excluir</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for producao in producoes %}
+                <tr>
+                    <td>{{ producao.data_hora }}</td>
+                    <td>{{ producao.cenario }}</td>
+                    <td>{{ producao.dia_semana }}</td>
+                    <td class="producao">{{ producao.total_tabuleiros }}</td>
+                    <td>{{ producao.total_empadas }}</td>
+
+                    <td>
+                        <a href="/historico/{{ producao.id }}" class="btn-link-metas">
+                            Ver Detalhes
+                        </a>
+                    </td>
+
+                    <td>
+                        <form
+                            method="POST"
+                            action="/historico/excluir/{{ producao.id }}"
+                            onsubmit="return confirm('Tem certeza que deseja excluir esta produção do histórico? Esta ação não pode ser desfeita.');"
+                        >
+                            <button type="submit" class="btn-excluir">
+                                Excluir
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% else %}
+
+        <div class="mensagem-sucesso">
+            Nenhuma produção salva ainda.
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</body>
+</html>

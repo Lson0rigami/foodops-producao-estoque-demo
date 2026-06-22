@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Categorias de Compra</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container">
+        {% include '_menu.html' %}
+
+        <h1>Categorias de Compra</h1>
+
+        {% if mensagem_sucesso %}<div class="mensagem-sucesso">{{ mensagem_sucesso }}</div>{% endif %}
+        {% if mensagem_erro %}<div class="mensagem-erro">{{ mensagem_erro }}</div>{% endif %}
+
+        <div class="card-usuario">
+            <h2>Nova Categoria</h2>
+            <form method="POST" action="/compras/categorias" class="form-cadastro-simples">
+                <div class="campo-form">
+                    <label>Nome</label>
+                    <input type="text" name="nome" placeholder="Ex: Hortifruti" required>
+                </div>
+                <button type="submit" class="btn-salvar-producao">Cadastrar</button>
+            </form>
+        </div>
+
+        <h2>Categorias Cadastradas</h2>
+        <table>
+            <thead><tr><th>Nome</th><th>Status</th><th>Ação</th></tr></thead>
+            <tbody>
+                {% for categoria in categorias %}
+                <tr>
+                    <td class="nome-sabor">{{ categoria.nome }}</td>
+                    <td>{% if categoria.ativo %}<span class="badge-status status-comprado">Ativa</span>{% else %}<span class="badge-status status-cancelado">Inativa</span>{% endif %}</td>
+                    <td>
+                        <form method="POST" action="/compras/categorias/alternar/{{ categoria.id }}">
+                            <button type="submit" class="btn-mini">Alternar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="botoes-metas">
+            <a href="/compras/pedidos" class="btn-link-avulsas">Voltar</a>
+        </div>
+    </div>
+</body>
+</html>

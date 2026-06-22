@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Produtos do Estoque</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container">
+        {% include '_menu.html' %}
+
+        <h1>Produtos do Estoque</h1>
+
+        {% if mensagem_sucesso %}<div class="mensagem-sucesso">{{ mensagem_sucesso }}</div>{% endif %}
+        {% if mensagem_erro %}<div class="mensagem-erro">{{ mensagem_erro }}</div>{% endif %}
+
+        <div class="info-resumo">
+            <p><strong>Regra:</strong> todo item movimentado no estoque precisa estar vinculado a um produto oficial.</p>
+            <p><strong>Código:</strong> gerado automaticamente para pedidos, saídas, romaneio e controles futuros.</p>
+        </div>
+
+        <div class="card-usuario">
+            <h2>Cadastrar Produto Oficial</h2>
+
+            <form method="POST" class="form-produto-profissional">
+                <div class="campo-form">
+                    <label>Nome do produto</label>
+                    <input type="text" name="nome" placeholder="Ex: Empada de Bacalhau" required>
+                </div>
+
+                <div class="campo-form">
+                    <label>Categoria</label>
+                    <select name="categoria_id">
+                        <option value="">Sem categoria</option>
+                        {% for categoria in categorias %}
+                        <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="campo-form">
+                    <label>Unidade padrão</label>
+                    <select name="unidade_padrao" required>
+                        {% for unidade in unidades %}
+                        <option value="{{ unidade }}">{{ unidade }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="campo-form">
+                    <label>Estoque mínimo</label>
+                    <input type="number" step="0.01" min="0" name="estoque_minimo" value="0">
+                </div>
+
+                <div class="campo-form">
+                    <label>Custo padrão</label>
+                    <input type="number" step="0.01" min="0" name="custo_padrao" value="0">
+                </div>
+
+                <div class="campo-form campo-check-produto">
+                    <label>Venda futura</label>
+                    <label class="check-inline"><input type="checkbox" name="ativo_venda" value="1"> Ativo para venda</label>
+                </div>
+
+                <div class="campo-form campo-check-produto">
+                    <label>Controle de validade</label>
+                    <label class="check-inline"><input type="checkbox" name="controla_validade" value="1"> Controlar por lote e validade</label>
+                </div>
+
+                <div class="campo-form">
+                    <label>Dias de validade</label>
+                    <input type="number" min="1" name="dias_validade" placeholder="Ex: 7">
+                </div>
+
+                <div class="campo-form campo-observacao-compra">
+                    <label>Observação</label>
+                    <input type="text" name="observacao" placeholder="Opcional">
+                </div>
+
+                <button type="submit" class="btn-salvar-producao">Cadastrar</button>
+            </form>
+        </div>
+
+        <div class="topo bloco-filtro-produtos">
+            <div class="campo-topo campo-busca-produto">
+                <label>Buscar produto</label>
+                <input type="text" id="busca-produto" placeholder="Digite código, nome ou categoria..." onkeyup="filtrarProdutos()">
+            </div>
+        </div>
+
+        <h2>Produtos Cadastrados</h2>
+
+        <table id="tabela-produtos">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Produto</th>
+                    <th>Categoria</th>
+                    <th>Unidade</th>
+                    <th>Mínimo</th>
+                    <th>Custo padrão</th>
+                    <th>Venda</th>
+                    <th>Validade</th>
+                    <th>Status</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for produto in produtos %}
+                <tr>
+                    <td><span class="codigo-produto">{{ produto.codigo or ('%04d' % produto.id) }}</span></td>
+                    <td class="nome-sabor">
+                        {{ produto.nome }}
+                        {% if produto.observacao %}<br><small>{{ produto.observacao }}</small>{% endif %}
+                    </td>
+                    <td>{{ produto.categoria_nome or '-' }}</td>
+                    <td>{{ produto.unidade_padrao }}</td>
+                    <td>{{ produto.estoque_minimo }}</td>
+                    <td>R$ {{ '%.2f'|format(produto.custo_padrao or 0) }}</td>
+                    <td>
+                        {% if produto.ativo_venda %}
+                        <span class="badge-status status-comprado">Sim</span>
+                        {% else %}
+                        <span class="badge-status status-pendente">Não</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if produto.controla_validade %}
+                        <span class="badge-status status-validade-proximo">{{ produto.dias_validade or '?' }} dias</span>
+                        {% else %}
+                        <span class="badge-status status-validade-encerrado">Não controla</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if produto.ativo %}
+                        <span class="badge-status status-comprado">Ativo</span>
+                        {% else %}
+                        <span class="badge-status status-cancelado">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="acoes-tabela">
+                            <a href="/estoque/produtos/editar/{{ produto.id }}" class="btn-link-metas btn-tabela">Editar</a>
+                            <form method="POST" action="/estoque/produtos/alternar/{{ produto.id }}">
+                                <button class="btn-mini" type="submit">Alternar</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="botoes-metas">
+            <a href="/estoque" class="btn-link-avulsas">Voltar ao Estoque</a>
+            <a href="/estoque/categorias" class="btn-link-metas">Categorias</a>
+            <a href="/estoque/saldo" class="btn-link-metas">Saldo Atual</a>
+        </div>
+    </div>
+
+    <script>
+        function filtrarProdutos() {
+            const busca = document.getElementById("busca-produto").value.toLowerCase();
+            const linhas = document.querySelectorAll("#tabela-produtos tbody tr");
+
+            linhas.forEach(function(linha) {
+                const texto = linha.innerText.toLowerCase();
+                linha.style.display = texto.includes(busca) ? "" : "none";
+            });
+        }
+    </script>
+</body>
+</html>

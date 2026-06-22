@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Revisão da Ficha - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container container-clean">
+        {% include '_menu.html' %}
+
+        <section class="dashboard-resumo modulo-hero-clean">
+            <div>
+                <span class="eyebrow">Histórico • Versão {{ revisao.versao }}</span>
+                <h1>{{ ficha.produto_codigo }} - {{ ficha.produto_nome }}</h1>
+                <p>{{ revisao.acao }} • {{ revisao.data_hora }} • {{ revisao.usuario }}</p>
+            </div>
+        </section>
+
+        {% set ficha_snapshot = dados.ficha or {} %}
+        {% set itens_snapshot = dados.itens or [] %}
+
+        <div class="info-resumo">
+            <p><strong>Tipo:</strong> {{ ficha_snapshot.tipo or '-' }}</p>
+            <p><strong>Rendimento:</strong> {{ ficha_snapshot.rendimento_quantidade or 0 }} {{ ficha_snapshot.rendimento_unidade or '' }}</p>
+            <p><strong>Status:</strong> {% if ficha_snapshot.ativo == 1 %}Ativa{% else %}Inativa{% endif %}</p>
+            <p><strong>Observação:</strong> {{ ficha_snapshot.observacao or '-' }}</p>
+        </div>
+
+        <h2>Componentes nesta versão</h2>
+        {% if itens_snapshot %}
+        <div class="tabela-responsiva">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Componente</th>
+                        <th>Categoria</th>
+                        <th>Quantidade</th>
+                        <th>Status</th>
+                        <th>Observação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in itens_snapshot %}
+                    <tr class="{% if item.ativo != 1 %}linha-cancelada{% endif %}">
+                        <td>{{ item.insumo_codigo }}</td>
+                        <td class="nome-sabor">{{ item.insumo_nome }}</td>
+                        <td>{{ item.categoria_nome or '-' }}</td>
+                        <td>{{ "%.4f"|format(item.quantidade or 0) }} {{ item.unidade }}</td>
+                        <td>{% if item.ativo == 1 %}Ativo{% else %}Inativo{% endif %}</td>
+                        <td>{{ item.observacao or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="mensagem-aviso">Esta versão não possui componentes.</div>
+        {% endif %}
+
+        <div class="mensagem-aviso">
+            Esta tela é somente para consulta histórica. A restauração automática de versões não foi habilitada para evitar alterações acidentais.
+        </div>
+
+        <div class="botoes-metas">
+            <a href="/fichas-tecnicas/{{ ficha.id }}/revisoes" class="btn-link-avulsas">Voltar às revisões</a>
+            <a href="/fichas-tecnicas/{{ ficha.id }}" class="btn-link-metas">Ficha atual</a>
+        </div>
+    </div>
+</body>
+</html>

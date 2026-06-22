@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indicadores Gerenciais - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-wide indicadores-pagina">
+    {% include '_menu.html' %}
+
+    <header class="cabecalho-pagina-gerencial">
+        <div>
+            <span class="eyebrow">Visão da direção</span>
+            <h1>Indicadores Gerenciais</h1>
+            <p>Produção, estoque, compras, expedição, custos e validades em uma única leitura.</p>
+        </div>
+        <a href="/dashboard" class="btn-link-avulsas">Voltar ao início</a>
+    </header>
+
+    <form method="GET" class="card-usuario filtros-indicadores no-print">
+        <div class="campo-form"><label for="data_inicio">Data inicial</label><input type="date" id="data_inicio" name="data_inicio" value="{{ indicadores.periodo.inicio }}"></div>
+        <div class="campo-form"><label for="data_fim">Data final</label><input type="date" id="data_fim" name="data_fim" value="{{ indicadores.periodo.fim }}"></div>
+        <button type="submit">Atualizar período</button>
+        <a href="/indicadores" class="btn-link-avulsas">Mês atual</a>
+        <button type="button" onclick="window.print()" class="btn-imprimir">Imprimir resumo</button>
+    </form>
+
+    <div class="periodo-indicadores">Período analisado: <strong>{{ indicadores.periodo.inicio_br }}</strong> até <strong>{{ indicadores.periodo.fim_br }}</strong></div>
+
+    <section class="kpi-grid-gerencial">
+        <article class="kpi-gerencial"><span>Produção confirmada</span><strong>{{ '%.0f'|format(indicadores.kpis.producao_unidades) }} un</strong><small>{{ indicadores.kpis.producoes_confirmadas }} produção(ões)</small></article>
+        <article class="kpi-gerencial"><span>Compras lançadas</span><strong>R$ {{ '%.2f'|format(indicadores.kpis.valor_notas) }}</strong><small>{{ indicadores.kpis.notas_lancadas }} nota(s)</small></article>
+        <article class="kpi-gerencial"><span>Custo expedido</span><strong>R$ {{ '%.2f'|format(indicadores.kpis.custo_expedido) }}</strong><small>{{ indicadores.kpis.romaneios_periodo }} romaneio(s)</small></article>
+        <article class="kpi-gerencial"><span>Centros de custo</span><strong>R$ {{ '%.2f'|format(indicadores.kpis.custo_centros) }}</strong><small>Materiais atendidos</small></article>
+        <article class="kpi-gerencial"><span>Valor estimado do estoque</span><strong>R$ {{ '%.2f'|format(indicadores.kpis.valor_estoque_estimado) }}</strong><small>Saldo positivo com custo conhecido</small></article>
+        <article class="kpi-gerencial {% if indicadores.kpis.custo_perdas_estimado > 0 %}kpi-gerencial-alerta{% endif %}"><span>Perdas estimadas</span><strong>R$ {{ '%.2f'|format(indicadores.kpis.custo_perdas_estimado) }}</strong><small>{{ indicadores.kpis.perdas_registros }} registro(s)</small></article>
+    </section>
+
+    <section class="grid-indicadores-duplo">
+        <article class="card-usuario painel-saude-estoque">
+            <div class="titulo-secao-dashboard"><div><span class="eyebrow">Estoque</span><h2>Saúde dos saldos</h2></div><a href="/estoque/saldo" class="link-discreto">Abrir saldo</a></div>
+            <div class="barra-saude-estoque" title="{{ indicadores.estoque.percentual_ok }}% dos produtos estão OK">
+                {% set total = indicadores.estoque.total_produtos or 1 %}
+                <span class="saude-ok" style="width: {{ (indicadores.estoque.status.OK / total * 100) }}%"></span>
+                <span class="saude-baixo" style="width: {{ (indicadores.estoque.status.Baixo / total * 100) }}%"></span>
+                <span class="saude-zerado" style="width: {{ (indicadores.estoque.status.Zerado / total * 100) }}%"></span>
+                <span class="saude-negativo" style="width: {{ (indicadores.estoque.status.Negativo / total * 100) }}%"></span>
+            </div>
+            <div class="legenda-saude">
+                <span><i class="ponto ponto-ok"></i> OK <strong>{{ indicadores.estoque.status.OK }}</strong></span>
+                <span><i class="ponto ponto-baixo"></i> Baixo <strong>{{ indicadores.estoque.status.Baixo }}</strong></span>
+                <span><i class="ponto ponto-zerado"></i> Zerado <strong>{{ indicadores.estoque.status.Zerado }}</strong></span>
+                <span><i class="ponto ponto-negativo"></i> Negativo <strong>{{ indicadores.estoque.status.Negativo }}</strong></span>
+            </div>
+            <div class="numero-destaque-saude"><strong>{{ indicadores.estoque.percentual_ok }}%</strong><span>dos produtos estão com saldo saudável</span></div>
+        </article>
+
+        <article class="card-usuario painel-validade-indicador">
+            <div class="titulo-secao-dashboard"><div><span class="eyebrow">Validades</span><h2>Situação dos lotes</h2></div><a href="/validade" class="link-discreto">Abrir validades</a></div>
+            <div class="mini-kpis-status">
+                <div><span>Ativos</span><strong>{{ indicadores.validades['Ativo'] }}</strong></div>
+                <div><span>Próximos</span><strong>{{ indicadores.validades['Próximo'] }}</strong></div>
+                <div class="mini-alerta"><span>Críticos</span><strong>{{ indicadores.validades['Crítico'] + indicadores.validades['Vence hoje'] }}</strong></div>
+                <div class="mini-critico"><span>Vencidos</span><strong>{{ indicadores.validades['Vencido'] }}</strong></div>
+            </div>
+            <p class="texto-secundario">Lotes encerrados permanecem no histórico e não entram como alerta operacional.</p>
+        </article>
+    </section>
+
+    <section class="grid-indicadores-duplo">
+        <article class="card-usuario">
+            <div class="titulo-secao-dashboard"><div><span class="eyebrow">Lojas</span><h2>Custo expedido por loja</h2></div><a href="/custos/lojas" class="link-discreto">Relatório completo</a></div>
+            {% if indicadores.top_lojas %}
+            <div class="ranking-barras">
+                {% for item in indicadores.top_lojas %}
+                <div class="ranking-linha"><div class="ranking-cabecalho"><span>{{ item.nome }}</span><strong>R$ {{ '%.2f'|format(item.valor) }}</strong></div><div class="ranking-trilho"><span style="width: {{ item.percentual_barra }}%"></span></div></div>
+                {% endfor %}
+            </div>
+            {% else %}<div class="estado-vazio-indicador">Nenhuma saída com custo congelado no período.</div>{% endif %}
+        </article>
+
+        <article class="card-usuario">
+            <div class="titulo-secao-dashboard"><div><span class="eyebrow">Setores</span><h2>Consumo por centro de custo</h2></div><a href="/custos/centros" class="link-discreto">Relatório completo</a></div>
+            {% if indicadores.top_centros %}
+            <div class="ranking-barras ranking-centros">
+                {% for item in indicadores.top_centros %}
+                <div class="ranking-linha"><div class="ranking-cabecalho"><span>{{ item.nome }}</span><strong>R$ {{ '%.2f'|format(item.valor) }}</strong></div><div class="ranking-trilho"><span style="width: {{ item.percentual_barra }}%"></span></div></div>
+                {% endfor %}
+            </div>
+            {% else %}<div class="estado-vazio-indicador">Nenhum atendimento de centro de custo no período.</div>{% endif %}
+        </article>
+    </section>
+
+    <section class="grid-indicadores-duplo">
+        <article class="card-usuario">
+            <div class="titulo-secao-dashboard"><div><span class="eyebrow">Produção</span><h2>Produtos mais produzidos</h2></div><a href="/producao-realizada" class="link-discreto">Abrir produções</a></div>
+            {% if indicadores.top_producao %}
+            <div class="ranking-barras ranking-producao">
+                {% for item in indicadores.top_producao %}
+                <div class="ranking-linha"><div class="ranking-cabecalho"><span>{{ item.nome }}</span><strong>{{ '%.0f'|format(item.valor) }} un</strong></div><div class="ranking-trilho"><span style="width: {{ item.percentual_barra }}%"></span></div></div>
+                {% endfor %}
+            </div>
+            {% else %}<div class="estado-vazio-indicador">Nenhuma produção confirmada no período.</div>{% endif %}
+        </article>
+
+        <article class="card-usuario">
+            <div class="titulo-secao-dashboard"><div><span class="eyebrow">Operação</span><h2>Fila atual</h2></div><span class="texto-secundario">Situação agora</span></div>
+            <div class="fila-operacional-grid">
+                <a href="/pedidos-lojas/fechamentos"><span>Rodadas abertas</span><strong>{{ indicadores.kpis.rodadas_abertas }}</strong></a>
+                <a href="/planejamentos-producao"><span>Planejamentos</span><strong>{{ indicadores.kpis.planejamentos_abertos }}</strong></a>
+                <a href="/estoque/separacoes"><span>Separações</span><strong>{{ indicadores.kpis.separacoes_pendentes }}</strong></a>
+                <a href="/estoque/transferencias"><span>Transferências</span><strong>{{ indicadores.kpis.transferencias_rascunho }}</strong></a>
+                <a href="/compras/notas"><span>Notas em rascunho</span><strong>{{ indicadores.kpis.notas_rascunho }}</strong></a>
+                <a href="/expedicao"><span>Pedidos de lojas</span><strong>{{ indicadores.kpis.pedidos_em_andamento }}</strong></a>
+            </div>
+        </article>
+    </section>
+
+    {% if indicadores.estoque.produtos_alerta %}
+    <section class="card-usuario">
+        <div class="titulo-secao-dashboard"><div><span class="eyebrow">Ação recomendada</span><h2>Produtos que precisam de atenção</h2></div><a href="/estoque/saldo" class="link-discreto">Ver todos</a></div>
+        <div class="table-scroll"><table><thead><tr><th>Código</th><th>Produto</th><th>Saldo</th><th>Status</th><th>Ação</th></tr></thead><tbody>
+        {% for item in indicadores.estoque.produtos_alerta %}<tr><td>{{ item.codigo }}</td><td class="nome-sabor">{{ item.nome }}</td><td>{{ '%.2f'|format(item.saldo) }} {{ item.unidade }}</td><td><span class="badge-status badge-{{ item.status|lower }}">{{ item.status }}</span></td><td><a href="/estoque/produtos/editar/{{ item.id }}" class="btn-mini">Abrir</a></td></tr>{% endfor %}
+        </tbody></table></div>
+    </section>
+    {% endif %}
+
+    <div class="aviso-custo-gerencial mensagem-aviso">
+        Os indicadores são gerenciais. Custos de perdas usam o custo atual do produto como estimativa; romaneios e centros de custo usam valores congelados no momento da operação.
+    </div>
+</div>
+</body>
+</html>

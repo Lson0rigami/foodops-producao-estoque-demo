@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalhes da Produção</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+
+    <div class="container">
+
+        <h1>Detalhes da Produção</h1>
+
+        {% if producao %}
+
+        <div class="info-resumo">
+            <p><strong>Data/Hora:</strong> {{ producao.data_hora }}</p>
+            <p><strong>Cenário:</strong> {{ producao.cenario }}</p>
+            <p><strong>Dia:</strong> {{ producao.dia_semana }}</p>
+        </div>
+
+        <div class="totais">
+            <p><strong>Total de tabuleiros:</strong> {{ producao.total_tabuleiros }}</p>
+            <p><strong>Total de empadas:</strong> {{ producao.total_empadas }}</p>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Sabor</th>
+                    <th>Classe</th>
+                    <th>Início</th>
+                    <th>Pedido</th>
+                    <th>Meta</th>
+                    <th>Origem</th>
+                    <th>Produção</th>
+                    <th>Final</th>
+                    <th>Empadas</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for item in itens %}
+                <tr>
+                    <td class="nome-sabor">{{ item.sabor }}</td>
+                    <td class="classe {{ item.classe|lower }}">{{ item.classe }}</td>
+                    <td>{{ item.inicio }}</td>
+                    <td>{{ item.pedido }}</td>
+                    <td>{{ item.meta }}</td>
+                    <td>{{ item.origem_meta }}</td>
+                    <td class="producao">{{ item.producao }}</td>
+                    <td>{{ item.estoque_final }}</td>
+                    <td>{{ item.empadas }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="botoes-metas">
+            <a href="/historico" class="btn-link-avulsas">Voltar ao Histórico</a>
+            <button onclick="window.print()" class="btn-imprimir">Imprimir Detalhes</button>
+        </div>
+
+        {% else %}
+
+        <div class="mensagem-sucesso">
+            Produção não encontrada.
+        </div>
+
+        <a href="/historico" class="btn-link-avulsas">Voltar</a>
+
+        {% endif %}
+
+    </div>
+
+</body>
+</html>

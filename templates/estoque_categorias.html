@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Categorias do Estoque</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container">
+        {% include '_menu.html' %}
+        <h1>Categorias do Estoque</h1>
+        {% if mensagem_sucesso %}<div class="mensagem-sucesso">{{ mensagem_sucesso }}</div>{% endif %}
+        {% if mensagem_erro %}<div class="mensagem-erro">{{ mensagem_erro }}</div>{% endif %}
+        <div class="card-usuario">
+            <h2>Nova Categoria</h2>
+            <form method="POST" class="form-confirmar-compra">
+                <div class="campo-form"><label>Nome</label><input type="text" name="nome" required></div>
+                <button type="submit" class="btn-salvar-producao">Cadastrar</button>
+            </form>
+        </div>
+        <table>
+            <thead><tr><th>Categoria</th><th>Status</th><th>Ação</th></tr></thead>
+            <tbody>{% for categoria in categorias %}<tr><td class="nome-sabor">{{ categoria.nome }}</td><td>{% if categoria.ativo %}Ativa{% else %}Inativa{% endif %}</td><td><form method="POST" action="/estoque/categorias/alternar/{{ categoria.id }}"><button class="btn-mini">Alternar</button></form></td></tr>{% endfor %}</tbody>
+        </table>
+        <div class="botoes-metas"><a href="/estoque" class="btn-link-avulsas">Voltar</a></div>
+    </div>
+</body>
+</html>

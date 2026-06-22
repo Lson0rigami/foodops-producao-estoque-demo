@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Início - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    {% include '_menu.html' %}
+    <main class="app-content dashboard-v2">
+        <header class="page-header-v2">
+            <div>
+                <span class="eyebrow">Visão operacional</span>
+                <h1>Bom trabalho, {{ session.usuario }}.</h1>
+                <p>Veja primeiro o que precisa de atenção e acesse o módulo necessário.</p>
+            </div>
+            {% if permissoes.indicadores %}
+            <a href="/indicadores" class="btn-primary-v2">Ver indicadores</a>
+            {% endif %}
+        </header>
+
+        <section class="section-v2" aria-labelledby="atencao-hoje">
+            <div class="section-heading-v2">
+                <div>
+                    <h2 id="atencao-hoje">Atenção hoje</h2>
+                    <p>Pendências e alertas que podem precisar de ação.</p>
+                </div>
+            </div>
+
+            <div class="metric-grid-v2">
+                {% if permissoes.producao %}
+                <a href="/producao-realizada?status=Pendente" class="metric-card-v2">
+                    <span class="metric-icon-v2 metric-blue">P</span>
+                    <span class="metric-copy-v2"><small>Pré-produções</small><strong>{{ indicadores.kpis.pre_producoes }}</strong><em>Aguardando conferência</em></span>
+                </a>
+                {% endif %}
+
+                {% if permissoes.estoque %}
+                <a href="/estoque/saldo" class="metric-card-v2 {% if indicadores.kpis.alertas_estoque %}metric-card-alert{% endif %}">
+                    <span class="metric-icon-v2 metric-orange">E</span>
+                    <span class="metric-copy-v2"><small>Estoque</small><strong>{{ indicadores.kpis.alertas_estoque }}</strong><em>Baixos, zerados ou negativos</em></span>
+                </a>
+                <a href="/validade" class="metric-card-v2 {% if indicadores.kpis.alertas_validade %}metric-card-danger{% endif %}">
+                    <span class="metric-icon-v2 metric-red">V</span>
+                    <span class="metric-copy-v2"><small>Validades</small><strong>{{ indicadores.kpis.alertas_validade }}</strong><em>Próximas ou vencidas</em></span>
+                </a>
+                {% endif %}
+
+                {% if permissoes.compras %}
+                <a href="/compras/pedidos" class="metric-card-v2">
+                    <span class="metric-icon-v2 metric-blue">C</span>
+                    <span class="metric-copy-v2"><small>Compras</small><strong>{{ indicadores.kpis.compras_pendentes }}</strong><em>Solicitações pendentes</em></span>
+                </a>
+                {% endif %}
+
+                {% if permissoes.expedicao %}
+                <a href="/expedicao" class="metric-card-v2">
+                    <span class="metric-icon-v2 metric-purple">X</span>
+                    <span class="metric-copy-v2"><small>Expedição</small><strong>{{ indicadores.kpis.pedidos_em_andamento }}</strong><em>Pedidos em atendimento</em></span>
+                </a>
+                {% endif %}
+
+                <a href="/solicitacoes-internas" class="metric-card-v2">
+                    <span class="metric-icon-v2 metric-green">S</span>
+                    <span class="metric-copy-v2"><small>Solicitações</small><strong>{{ total_solicitacoes_internas }}</strong><em>Aguardando atendimento</em></span>
+                </a>
+            </div>
+        </section>
+
+        {% if indicadores.alertas_operacionais %}
+        <section class="attention-panel-v2">
+            <div class="section-heading-v2 compact">
+                <div><h2>Pontos que precisam de ação</h2><p>Itens destacados pelos indicadores operacionais.</p></div>
+                {% if permissoes.indicadores %}<a href="/indicadores" class="text-link-v2">Ver painel completo</a>{% endif %}
+            </div>
+            <div class="attention-list-v2">
+                {% for alerta in indicadores.alertas_operacionais %}
+                <a href="{{ alerta.url }}" class="attention-item-v2 attention-{{ alerta.nivel }}">
+                    <span>{{ alerta.titulo }}</span><strong>{{ alerta.valor }}</strong>
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <section class="section-v2" aria-labelledby="modulos-sistema">
+            <div class="section-heading-v2">
+                <div><h2 id="modulos-sistema">Módulos</h2><p>Escolha somente a área em que você vai trabalhar agora.</p></div>
+            </div>
+
+            <div class="module-grid-v2">
+                {% if permissoes.producao %}
+                <article class="module-card-v2">
+                    <span class="module-symbol-v2 symbol-production">P</span>
+                    <div><h3>Produção</h3><p>Pedidos das lojas, metas, planejamento e produção realizada.</p></div>
+                    <a href="/producao" class="module-action-v2">Acessar <span>→</span></a>
+                </article>
+                {% endif %}
+
+                {% if permissoes.estoque %}
+                <article class="module-card-v2">
+                    <span class="module-symbol-v2 symbol-stock">E</span>
+                    <div><h3>Estoque</h3><p>Produtos, saldos, separações, células, lotes e validades.</p></div>
+                    <a href="/estoque" class="module-action-v2">Acessar <span>→</span></a>
+                </article>
+                {% endif %}
+
+                {% if permissoes.compras %}
+                <article class="module-card-v2">
+                    <span class="module-symbol-v2 symbol-purchases">C</span>
+                    <div><h3>Compras</h3><p>Solicitações, fornecedores, notas de entrada e relatórios.</p></div>
+                    <a href="/compras" class="module-action-v2">Acessar <span>→</span></a>
+                </article>
+                {% endif %}
+
+                <article class="module-card-v2">
+                    <span class="module-symbol-v2 symbol-requests">S</span>
+                    <div><h3>Solicitações internas</h3><p>Pedidos de materiais para setores e células de produção.</p></div>
+                    <a href="/solicitacoes-internas" class="module-action-v2">Acessar <span>→</span></a>
+                </article>
+
+                {% if permissoes.expedicao %}
+                <article class="module-card-v2">
+                    <span class="module-symbol-v2 symbol-shipping">X</span>
+                    <div><h3>Expedição</h3><p>Separação, conferência, romaneios, motoristas e veículos.</p></div>
+                    <a href="/expedicao" class="module-action-v2">Acessar <span>→</span></a>
+                </article>
+                {% endif %}
+
+                {% if permissoes.custos %}
+                <article class="module-card-v2">
+                    <span class="module-symbol-v2 symbol-costs">$</span>
+                    <div><h3>Custos</h3><p>Custos por loja, centro de custo e produto.</p></div>
+                    <a href="/custos" class="module-action-v2">Acessar <span>→</span></a>
+                </article>
+                {% endif %}
+
+                {% if permissoes.indicadores %}
+                <article class="module-card-v2">
+                    <span class="module-symbol-v2 symbol-indicators">I</span>
+                    <div><h3>Indicadores</h3><p>Alertas, desempenho e visão gerencial do período.</p></div>
+                    <a href="/indicadores" class="module-action-v2">Acessar <span>→</span></a>
+                </article>
+                {% endif %}
+
+                {% if permissoes.administracao %}
+                <article class="module-card-v2">
+                    <span class="module-symbol-v2 symbol-admin">A</span>
+                    <div><h3>Administração</h3><p>Usuários, metas, lojas, configurações e backup.</p></div>
+                    <a href="/usuarios" class="module-action-v2">Acessar <span>→</span></a>
+                </article>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+</body>
+</html>

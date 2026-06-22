@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrar - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body class="login-page login-page-v2">
+    <main class="login-shell">
+        <section class="login-brand-panel">
+            <div class="login-brand-content">
+                <span class="login-brand-mark"></span>
+                <img src="{{ url_for('static', filename='img/logo_sistema2.png') }}" alt="FoodOps Demo" class="login-brand-logo">
+                <div>
+                    <span class="eyebrow">Gestão operacional integrada</span>
+                    <h1>FoodOps Demo</h1>
+                    <p>Produção, estoque, compras e expedição em um único lugar.</p>
+                </div>
+            </div>
+            <small class="login-brand-footer">Uso interno • FoodOps Demo</small>
+        </section>
+
+        <section class="login-form-panel">
+            <div class="login-card-v2">
+                <div class="login-card-heading">
+                    <span class="login-mobile-logo">B</span>
+                    <h2>Bem-vindo</h2>
+                    <p>Entre com seu usuário para acessar o sistema.</p>
+                </div>
+
+                {% if erro %}
+                <div class="mensagem-erro login-alert" role="alert">{{ erro }}</div>
+                {% endif %}
+
+                <form method="POST" class="login-form-v2">
+                    <div class="form-field-v2">
+                        <label for="usuario">Usuário</label>
+                        <div class="input-icon-wrap">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0"/></svg>
+                            <input type="text" name="usuario" id="usuario" placeholder="Digite seu usuário" autocomplete="username" required autofocus>
+                        </div>
+                    </div>
+
+                    <div class="form-field-v2">
+                        <label for="senha">Senha</label>
+                        <div class="input-icon-wrap">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 10h12v10H6zM8 10V7a4 4 0 0 1 8 0v3M12 14v2"/></svg>
+                            <input type="password" name="senha" id="senha" placeholder="Digite sua senha" autocomplete="current-password" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-login-v2">Entrar no sistema</button>
+                </form>
+
+                <p class="login-help">Em caso de dificuldade, procure o administrador responsável.</p>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

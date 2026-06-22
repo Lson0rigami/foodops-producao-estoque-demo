@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Solicitações Internas - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean">
+    {% include '_menu.html' %}
+
+    <section class="dashboard-resumo modulo-hero-clean">
+        <div>
+            <span class="eyebrow">Operação interna</span>
+            <h1>Solicitações Internas</h1>
+            <p>Pedidos digitais de materiais para centros de custo ou células de produção.</p>
+        </div>
+        <div class="acoes-hero no-print">
+            <a href="/solicitacoes-internas/nova" class="btn-primary-clean">Nova solicitação</a>
+            {% if pode_operar %}
+            <a href="/solicitacoes-internas/relatorio" class="btn-link-metas">Custos por setor</a>
+            <a href="/solicitacoes-internas/centros-custo" class="btn-link-avulsas">Centros de custo</a>
+            {% endif %}
+        </div>
+    </section>
+
+    <form method="GET" class="topo filtro-solicitacoes no-print">
+        <div class="campo-topo campo-filtro-flex">
+            <label for="busca">Buscar</label>
+            <input type="text" id="busca" name="busca" value="{{ busca }}" placeholder="Código, solicitante ou observação">
+        </div>
+        <div class="campo-topo">
+            <label for="status">Status</label>
+            <select id="status" name="status">
+                <option value="">Todos</option>
+                {% for item in status_filtro %}
+                <option value="{{ item }}" {% if status_selecionado == item %}selected{% endif %}>{{ item }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="campo-topo">
+            <label for="destino_tipo">Tipo de destino</label>
+            <select id="destino_tipo" name="destino_tipo" onchange="alternarFiltrosDestino()">
+                <option value="">Todos</option>
+                <option value="Centro de Custo" {% if destino_tipo_selecionado == 'Centro de Custo' %}selected{% endif %}>Centro de Custo</option>
+                <option value="Célula" {% if destino_tipo_selecionado == 'Célula' %}selected{% endif %}>Célula</option>
+            </select>
+        </div>
+        <div class="campo-topo" id="filtro-centro">
+            <label for="centro_custo_id">Centro de custo</label>
+            <select id="centro_custo_id" name="centro_custo_id">
+                <option value="">Todos</option>
+                {% for centro in centros_custo %}
+                <option value="{{ centro.id }}" {% if centro_custo_selecionado|string == centro.id|string %}selected{% endif %}>{{ centro.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="campo-topo" id="filtro-celula">
+            <label for="celula_id">Célula</label>
+            <select id="celula_id" name="celula_id">
+                <option value="">Todas</option>
+                {% for celula in celulas %}
+                <option value="{{ celula.id }}" {% if celula_selecionada|string == celula.id|string %}selected{% endif %}>{{ celula.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit">Filtrar</button>
+        <a href="/solicitacoes-internas" class="btn-link-avulsas">Limpar</a>
+    </form>
+
+    {% if solicitacoes %}
+    <div class="tabela-responsiva">
+        <table>
+            <thead>
+            <tr>
+                <th>Código</th>
+                <th>Data</th>
+                <th>Solicitante</th>
+                <th>Destino</th>
+                <th>Itens</th>
+                <th>Prioridade</th>
+                <th>Status</th>
+                <th>Ação</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in solicitacoes %}
+            <tr>
+                <td class="nome-sabor">{{ item.codigo }}</td>
+                <td>{{ item.data_solicitacao }}</td>
+                <td>{{ item.solicitante }}</td>
+                <td>
+                    <strong>{{ item.centro_custo_nome or item.celula_nome }}</strong>
+                    <div class="texto-fraco">{{ item.destino_tipo }}</div>
+                </td>
+                <td>{{ item.total_itens }}</td>
+                <td>
+                    <span class="badge-status {% if item.prioridade == 'Urgente' %}status-erro{% else %}status-neutro{% endif %}">{{ item.prioridade }}</span>
+                </td>
+                <td><span class="badge-status status-solicitacao-{{ item.status|lower|replace(' ', '-')|replace('ç','c') }}">{{ item.status }}</span></td>
+                <td><a href="/solicitacoes-internas/{{ item.id }}" class="btn-mini">Abrir</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="mensagem-aviso">Nenhuma solicitação encontrada com os filtros informados.</div>
+    {% endif %}
+</div>
+
+<script>
+function alternarFiltrosDestino() {
+    const tipo = document.getElementById('destino_tipo').value;
+    document.getElementById('filtro-centro').style.display = tipo === 'Célula' ? 'none' : 'flex';
+    document.getElementById('filtro-celula').style.display = tipo === 'Centro de Custo' ? 'none' : 'flex';
+}
+alternarFiltrosDestino();
+</script>
+</body>
+</html>

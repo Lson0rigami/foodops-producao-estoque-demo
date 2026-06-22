@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Relatórios de Compras</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container">
+        {% include '_menu.html' %}
+
+        <h1>Relatórios de Compras</h1>
+
+        <form method="GET" action="/compras/relatorios" class="topo">
+            <div class="campo-topo">
+                <label>De</label>
+                <input type="date" name="data_inicio" value="{{ data_inicio }}">
+            </div>
+            <div class="campo-topo">
+                <label>Até</label>
+                <input type="date" name="data_fim" value="{{ data_fim }}">
+            </div>
+            <div class="campo-topo">
+                <label>Categoria</label>
+                <select name="categoria_id">
+                    <option value="">Todas</option>
+                    {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}" {% if categoria_id|string == categoria.id|string %}selected{% endif %}>{{ categoria.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="campo-topo">
+                <label>Fornecedor</label>
+                <select name="fornecedor_id">
+                    <option value="">Todos</option>
+                    {% for fornecedor in fornecedores %}
+                    <option value="{{ fornecedor.id }}" {% if fornecedor_id|string == fornecedor.id|string %}selected{% endif %}>{{ fornecedor.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit">Filtrar</button>
+            <a href="/compras/relatorios" class="btn-link-avulsas">Limpar</a>
+            <a href="/compras/pedidos" class="btn-link-avulsas">Voltar</a>
+        </form>
+
+        <div class="totais">
+            <p><strong>Total de itens comprados:</strong> {{ itens|length }}</p>
+        </div>
+
+        <div class="painel-resumos-compras">
+            <div class="card-usuario">
+                <h2>Compras por Categoria</h2>
+                {% if resumo_categorias %}
+                <table>
+                    <thead><tr><th>Categoria</th><th>Total</th></tr></thead>
+                    <tbody>
+                        {% for item in resumo_categorias %}
+                        <tr><td class="nome-sabor">{{ item.nome }}</td><td class="producao">{{ item.total }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}<div class="mensagem-sucesso">Sem compras por categoria.</div>{% endif %}
+            </div>
+
+            <div class="card-usuario">
+                <h2>Compras por Fornecedor</h2>
+                {% if resumo_fornecedores %}
+                <table>
+                    <thead><tr><th>Fornecedor</th><th>Total</th></tr></thead>
+                    <tbody>
+                        {% for item in resumo_fornecedores %}
+                        <tr><td class="nome-sabor">{{ item.nome }}</td><td class="producao">{{ item.total }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}<div class="mensagem-sucesso">Sem compras por fornecedor.</div>{% endif %}
+            </div>
+        </div>
+
+        <h2>Histórico Filtrado</h2>
+        {% if itens %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Pedido</th>
+                    <th>Descrição</th>
+                    <th>Qtd</th>
+                    <th>Categoria</th>
+                    <th>Fornecedor</th>
+                    <th>Data</th>
+                    <th>Comprado por</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in itens %}
+                <tr>
+                    <td>#{{ item.pedido_id }}</td>
+                    <td class="nome-sabor">{{ item.descricao }}</td>
+                    <td>{{ item.quantidade }} {{ item.unidade }}</td>
+                    <td>{{ item.categoria_nome }}</td>
+                    <td>{{ item.fornecedor_nome or '-' }}</td>
+                    <td>{{ item.data_compra or '-' }}</td>
+                    <td>{{ item.comprado_por or '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="mensagem-sucesso">Nenhuma compra encontrada com os filtros selecionados.</div>
+        {% endif %}
+    </div>
+</body>
+</html>

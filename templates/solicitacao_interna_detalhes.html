@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ solicitacao.codigo }} - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean solicitacao-interna-pagina">
+    {% include '_menu.html' %}
+
+    <section class="dashboard-resumo modulo-hero-clean">
+        <div>
+            <span class="eyebrow">Solicitação interna • {{ solicitacao.codigo }}</span>
+            <h1>Conferência e Atendimento</h1>
+            <p>{{ solicitacao.destino_tipo }} • {{ solicitacao.centro_custo_nome or solicitacao.celula_nome }}</p>
+        </div>
+        <span class="badge-status badge-status-grande status-solicitacao-{{ solicitacao.status|lower|replace(' ', '-')|replace('ç','c') }}">{{ solicitacao.status }}</span>
+    </section>
+
+    {% if mensagem_sucesso %}<div class="mensagem-sucesso">{{ mensagem_sucesso }}</div>{% endif %}
+    {% if mensagem_erro %}<div class="mensagem-erro">{{ mensagem_erro }}</div>{% endif %}
+
+    <div class="painel-produto-detalhes planejamento-resumo-grid">
+        <div class="card-detalhe-produto"><span>Solicitante</span><strong>{{ solicitacao.solicitante }}</strong></div>
+        <div class="card-detalhe-produto"><span>Solicitada em</span><strong>{{ solicitacao.data_solicitacao }}</strong></div>
+        <div class="card-detalhe-produto"><span>Necessário para</span><strong>{{ solicitacao.data_necessidade or '-' }}</strong></div>
+        <div class="card-detalhe-produto"><span>Prioridade</span><strong>{{ solicitacao.prioridade }}</strong></div>
+        <div class="card-detalhe-produto"><span>Custo congelado</span><strong>R$ {{ '%.2f'|format(solicitacao.custo_total or 0) }}</strong></div>
+    </div>
+
+    {% if solicitacao.observacao %}<div class="info-resumo"><p><strong>Observação:</strong> {{ solicitacao.observacao }}</p></div>{% endif %}
+
+    <div class="painel-acoes-ficha no-print">
+        <a href="/solicitacoes-internas" class="btn-link-avulsas">Voltar</a>
+        <button type="button" onclick="window.print()" class="btn-imprimir">Imprimir</button>
+        {% if pode_operar %}<a href="/solicitacoes-internas/relatorio" class="btn-link-metas">Custos por setor</a>{% endif %}
+    </div>
+
+    <form method="POST" action="/solicitacoes-internas/{{ solicitacao.id }}/salvar-separacao" class="form-solicitacao-print">
+        <section class="card-usuario">
+            <div class="secao-cabecalho-planejamento">
+                <div>
+                    <span class="eyebrow">Estoque</span>
+                    <h2>Itens solicitados</h2>
+                    {% if pode_operar and solicitacao.status not in ['Atendida', 'Atendida parcialmente', 'Cancelada'] %}
+                    <p>Informe a quantidade física separada ou marque o item como recusado.</p>
+                    {% else %}
+                    <p>Histórico das quantidades solicitadas, separadas e atendidas.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="tabela-responsiva">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Solicitado</th>
+                        <th>Saldo central</th>
+                        <th>Separado</th>
+                        <th>Status</th>
+                        <th>Recusa / observação</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in itens %}
+                    <tr>
+                        <td class="nome-sabor">
+                            {{ item.produto_codigo }} - {{ item.produto_nome }}
+                            <div class="texto-fraco">{{ item.categoria_nome or '-' }} • {{ item.embalagem_nome or item.unidade }}</div>
+                        </td>
+                        <td>
+                            {{ '%.4f'|format(item.quantidade_solicitada_base or 0) }} {{ item.unidade }}
+                            <div class="texto-fraco">{{ '%.4f'|format(item.quantidade_solicitada_embalagem or 0) }} {{ item.embalagem_nome }}</div>
+                        </td>
+                        <td class="{% if item.saldo_atual + 0.0000001 < item.quantidade_separada_base %}saldo-insuficiente{% else %}saldo-disponivel{% endif %}">
+                            {{ '%.4f'|format(item.saldo_atual or 0) }} {{ item.unidade }}
+                        </td>
+                        <td>
+                            {% if pode_operar and solicitacao.status not in ['Atendida', 'Atendida parcialmente', 'Cancelada'] %}
+                            <input type="number" step="0.0001" min="0" max="{{ item.quantidade_solicitada_base }}"
+                                   name="separado_{{ item.id }}" value="{{ '%.4f'|format(item.quantidade_separada_base or 0) }}">
+                            <small>{{ item.unidade }}</small>
+                            {% else %}
+                            {{ '%.4f'|format(item.quantidade_separada_base or 0) }} {{ item.unidade }}
+                            {% endif %}
+                        </td>
+                        <td><span class="badge-status status-solicitacao-{{ item.status|lower|replace(' ', '-')|replace('ç','c') }}">{{ item.status }}</span></td>
+                        <td>
+                            {% if pode_operar and solicitacao.status not in ['Atendida', 'Atendida parcialmente', 'Cancelada'] %}
+                            <label class="check-inline"><input type="checkbox" name="recusado_{{ item.id }}" value="1" {% if item.recusado %}checked{% endif %}> Recusar</label>
+                            <input type="text" name="motivo_recusa_{{ item.id }}" value="{{ item.motivo_recusa or '' }}" placeholder="Motivo da recusa">
+                            <input type="text" name="observacao_{{ item.id }}" value="{{ item.observacao or '' }}" placeholder="Observação operacional">
+                            {% else %}
+                            {% if item.motivo_recusa %}<strong>{{ item.motivo_recusa }}</strong><br>{% endif %}
+                            {{ item.observacao or '-' }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        {% if pode_operar and solicitacao.status not in ['Atendida', 'Atendida parcialmente', 'Cancelada'] %}
+        <div class="botoes-metas no-print">
+            <button type="submit" class="btn-salvar-producao">Salvar separação</button>
+            {% if solicitacao.status == 'Pronta para confirmar' %}
+            <button type="submit" formaction="/solicitacoes-internas/{{ solicitacao.id }}/confirmar"
+                    onclick="return confirm('Confirmar atendimento? Esta ação movimentará o estoque.');">
+                Confirmar atendimento
+            </button>
+            {% endif %}
+        </div>
+        {% endif %}
+    </form>
+
+    {% if solicitacao.status in ['Atendida', 'Atendida parcialmente'] %}
+    <div class="mensagem-sucesso">
+        Atendimento confirmado por {{ solicitacao.confirmado_por }} em {{ solicitacao.data_confirmacao }}.
+        {% if solicitacao.destino_tipo == 'Célula' %}Os materiais foram transferidos para a célula.{% else %}A saída foi registrada no centro de custo.{% endif %}
+    </div>
+    {% endif %}
+
+    {% if pode_cancelar %}
+    <form method="POST" action="/solicitacoes-internas/{{ solicitacao.id }}/cancelar" class="card-usuario no-print" onsubmit="return confirm('Cancelar esta solicitação?');">
+        <label for="motivo_cancelamento">Motivo do cancelamento</label>
+        <input type="text" name="motivo_cancelamento" id="motivo_cancelamento" placeholder="Opcional">
+        <div class="botoes-metas"><button type="submit" class="btn-excluir">Cancelar solicitação</button></div>
+    </form>
+    {% endif %}
+</div>
+</body>
+</html>

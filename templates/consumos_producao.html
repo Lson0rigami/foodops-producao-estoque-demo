@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Consumos Reais - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean">
+    {% include '_menu.html' %}
+
+    <section class="dashboard-resumo modulo-hero-clean">
+        <div>
+            <span class="eyebrow">Produção • Células</span>
+            <h1>Consumos Reais</h1>
+            <p>Registre o que cada célula realmente utilizou, perdeu, devolveu ou manteve como saldo.</p>
+        </div>
+    </section>
+
+    <form method="GET" class="card-usuario filtros-grade filtros-consumo">
+        <div class="campo-form">
+            <label>Status</label>
+            <select name="status">
+                <option value="">Todos</option>
+                {% for opcao in ['Rascunho', 'Confirmado', 'Cancelado'] %}
+                <option value="{{ opcao }}" {% if status == opcao %}selected{% endif %}>{{ opcao }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="campo-form">
+            <label>Célula</label>
+            <select name="celula_id">
+                <option value="">Todas</option>
+                {% for celula in celulas %}
+                <option value="{{ celula.id }}" {% if celula_id == celula.id|string %}selected{% endif %}>{{ celula.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="campo-form campo-acao-final"><button type="submit">Filtrar</button></div>
+        <div class="campo-form campo-acao-final"><a href="/producao" class="btn-link-avulsas">Voltar à Produção</a></div>
+    </form>
+
+    <div class="totais">
+        <p><strong>Rascunhos pendentes:</strong> {{ total_rascunhos }}</p>
+        <p><strong>Registros listados:</strong> {{ consumos|length }}</p>
+    </div>
+
+    <section class="card-usuario">
+        {% if consumos %}
+        <div class="tabela-responsiva">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Consumo</th>
+                        <th>Produção</th>
+                        <th>Célula</th>
+                        <th>Planejamento</th>
+                        <th>Itens</th>
+                        <th>Status da produção</th>
+                        <th>Status</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for consumo in consumos %}
+                    <tr>
+                        <td>#{{ consumo.id }}<br><small>{{ consumo.data_criacao }}</small></td>
+                        <td>#{{ consumo.producao_realizada_id }}<br><small>{{ consumo.producao_status }}</small></td>
+                        <td class="nome-sabor">{{ consumo.celula_nome }}</td>
+                        <td>{% if consumo.planejamento_id %}#{{ consumo.planejamento_id }}{% else %}-{% endif %}</td>
+                        <td>{{ consumo.total_itens }}</td>
+                        <td>{{ consumo.producao_status }}</td>
+                        <td>
+                            <span class="badge-status {% if consumo.status == 'Rascunho' %}status-pendente{% elif consumo.status == 'Confirmado' %}status-comprado{% else %}status-cancelado{% endif %}">
+                                {{ consumo.status }}
+                            </span>
+                        </td>
+                        <td><a href="/consumos-producao/{{ consumo.id }}" class="btn-link-metas">Abrir</a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="mensagem-aviso">Nenhum consumo real encontrado para os filtros informados.</div>
+        {% endif %}
+    </section>
+</div>
+</body>
+</html>

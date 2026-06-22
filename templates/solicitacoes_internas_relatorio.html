@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Custos por Setor - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean relatorio-centro-custo-pagina">
+    {% include '_menu.html' %}
+    <section class="dashboard-resumo modulo-hero-clean">
+        <div><span class="eyebrow">Solicitações internas</span><h1>Custos por Centro de Custo</h1><p>Valores congelados no momento em que o estoque confirma o atendimento.</p></div>
+        <button type="button" onclick="window.print()" class="btn-imprimir no-print">Imprimir</button>
+    </section>
+
+    <form method="GET" class="topo no-print">
+        <div class="campo-topo"><label>De</label><input type="date" name="data_inicio" value="{{ data_inicio }}"></div>
+        <div class="campo-topo"><label>Até</label><input type="date" name="data_fim" value="{{ data_fim }}"></div>
+        <div class="campo-topo campo-filtro-flex"><label>Centro de custo</label><select name="centro_custo_id"><option value="">Todos</option>{% for centro in centros_custo %}<option value="{{ centro.id }}" {% if centro_custo_selecionado|string == centro.id|string %}selected{% endif %}>{{ centro.nome }}</option>{% endfor %}</select></div>
+        <button type="submit">Filtrar</button><a href="/solicitacoes-internas/relatorio" class="btn-link-avulsas">Limpar</a><a href="/solicitacoes-internas" class="btn-link-avulsas">Voltar</a>
+    </form>
+
+    <div class="totais"><p><strong>Total apurado:</strong> R$ {{ '%.2f'|format(total_geral or 0) }}</p><p><strong>Itens atendidos:</strong> {{ detalhes|length }}</p></div>
+
+    <section class="card-usuario">
+        <h2>Resumo por setor</h2>
+        {% if resumo %}
+        <div class="dashboard-grid dashboard-grid-clean resumo-centros-grid">
+            {% for item in resumo %}
+            <article class="dashboard-card dashboard-card-clean"><span class="eyebrow">Centro de custo</span><h3>{{ item.centro_custo }}</h3><strong class="valor-destaque">R$ {{ '%.2f'|format(item.total) }}</strong><div class="texto-fraco">{{ item.itens }} item(ns)</div></article>
+            {% endfor %}
+        </div>
+        {% else %}<div class="mensagem-aviso">Nenhum custo encontrado no período.</div>{% endif %}
+    </section>
+
+    <section class="card-usuario">
+        <h2>Detalhamento</h2>
+        {% if detalhes %}
+        <div class="tabela-responsiva"><table><thead><tr><th>Data</th><th>Solicitação</th><th>Centro</th><th>Produto</th><th>Quantidade</th><th>Custo unitário</th><th>Total</th></tr></thead><tbody>
+        {% for item in detalhes %}<tr><td>{{ item.data_confirmacao }}</td><td>{{ item.codigo }}</td><td>{{ item.centro_custo_nome }}</td><td class="nome-sabor">{{ item.produto_codigo }} - {{ item.produto_nome }}</td><td>{{ '%.4f'|format(item.quantidade_atendida_base) }} {{ item.unidade }}</td><td>R$ {{ '%.4f'|format(item.custo_unitario_snapshot) }}</td><td><strong>R$ {{ '%.2f'|format(item.custo_total_snapshot) }}</strong></td></tr>{% endfor %}
+        </tbody></table></div>
+        {% else %}<div class="mensagem-aviso">Sem movimentações para exibir.</div>{% endif %}
+    </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Conferência da Produção - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container container-clean">
+        {% include '_menu.html' %}
+
+        <section class="dashboard-resumo modulo-hero-clean">
+            <div>
+                <span class="eyebrow">Pré-produção #{{ producao.id }}</span>
+                <h1>Conferência da Produção</h1>
+                <p>Ajuste, cancele ou adicione itens antes de lançar os produtos acabados no estoque.</p>
+            </div>
+        </section>
+
+        {% if request.args.get('mensagem') %}<div class="mensagem-sucesso">{{ request.args.get('mensagem') }}</div>{% endif %}
+
+        <div class="info-resumo">
+            <p><strong>Data:</strong> {{ producao.data_criacao }}</p>
+            <p><strong>Cenário:</strong> {{ producao.cenario }}</p>
+            <p><strong>Dia:</strong> {{ producao.dia_semana }}</p>
+            <p><strong>Origem:</strong> {{ producao.origem }}</p>
+            <p><strong>Status:</strong>
+                <span class="badge-status {% if producao.status == 'Pendente' %}status-pendente{% elif producao.status == 'Confirmado' %}status-comprado{% else %}status-cancelado{% endif %}">
+                    {{ producao.status }}
+                </span>
+            </p>
+        </div>
+
+        <div class="totais">
+            <p><strong>Total de embalagens/tabuleiros:</strong> {{ "%.2f"|format(producao.total_tabuleiros or 0) }}</p>
+            <p><strong>Total de unidades:</strong> {{ "%.0f"|format(producao.total_unidades or 0) }}</p>
+        </div>
+
+        <div class="mensagem-aviso">
+            A confirmação desta tela lança os produtos acabados no estoque. O consumo de insumos é registrado separadamente por célula, evitando baixar diretamente do estoque central.
+        </div>
+
+        {% if producao.planejamento_id %}
+        <div class="botoes-metas no-print">
+            <a href="/analises-producao/{{ producao.id }}" class="btn-link-metas">Ver previsto x realizado</a>
+        </div>
+        {% endif %}
+
+        <section class="card-usuario card-consumos-producao">
+            <div class="cabecalho-card-flex">
+                <div>
+                    <h2>Consumo real por célula</h2>
+                    <p class="texto-ajuda texto-ajuda-clean">Registre utilizado, perda, retorno e sobra de cada célula vinculada a esta produção.</p>
+                </div>
+                {% if producao.planejamento_id and producao.status != 'Cancelado' %}
+                <a href="/producao-realizada/{{ producao.id }}/consumos/novo" class="btn-link-metas">Novo consumo</a>
+                {% endif %}
+            </div>
+
+            {% if consumos_reais %}
+            <div class="tabela-responsiva">
+                <table>
+                    <thead><tr><th>Registro</th><th>Célula</th><th>Status</th><th>Itens</th><th>Ação</th></tr></thead>
+                    <tbody>
+                    {% for consumo in consumos_reais %}
+                    <tr>
+                        <td>#{{ consumo.id }}<br><small>{{ consumo.data_criacao }}</small></td>
+                        <td class="nome-sabor">{{ consumo.celula_nome }}</td>
+                        <td><span class="badge-status {% if consumo.status == 'Rascunho' %}status-pendente{% elif consumo.status == 'Confirmado' %}status-comprado{% else %}status-cancelado{% endif %}">{{ consumo.status }}</span></td>
+                        <td>{{ consumo.total_itens }}</td>
+                        <td><a href="/consumos-producao/{{ consumo.id }}" class="btn-link-metas">Abrir</a></td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% elif not producao.planejamento_id %}
+            <div class="mensagem-aviso">Esta produção não possui planejamento vinculado. O consumo poderá ser tratado manualmente em uma evolução futura.</div>
+            {% else %}
+            <div class="mensagem-aviso">Nenhum consumo real foi criado para esta produção.</div>
+            {% endif %}
+        </section>
+
+        {% if producao.status == "Pendente" %}
+        <div class="card-usuario card-conferencia-producao">
+            <h2>Adicionar item manual</h2>
+            <p class="texto-ajuda texto-ajuda-clean">Use quando algo foi produzido fora da pré-produção gerada pelas etiquetas, como um ajuste, complemento ou item feito manualmente.</p>
+
+            <form method="POST" action="/producao-realizada/{{ producao.id }}/adicionar-item" class="form-cadastro-simples form-producao-item">
+                <div class="campo-form">
+                    <label for="sabor">Descrição/Sabor:</label>
+                    <input type="text" name="sabor" id="sabor" placeholder="Ex: Chocolate misto">
+                </div>
+
+                <div class="campo-form">
+                    <label for="produto_novo">Produto oficial:</label>
+                    <select name="produto_estoque_id" id="produto_novo" class="select-produto" data-target="embalagem_novo" required>
+                        <option value="">Selecione...</option>
+                        {% for produto in produtos %}
+                        <option value="{{ produto.id }}">{{ produto.codigo }} - {{ produto.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="campo-form">
+                    <label for="embalagem_novo">Embalagem/conversão:</label>
+                    <select name="embalagem_id" id="embalagem_novo" class="select-embalagem" required></select>
+                </div>
+
+                <div class="campo-form">
+                    <label for="quantidade_novo">Quantidade:</label>
+                    <input type="number" step="0.01" min="0.01" name="quantidade_embalagem" id="quantidade_novo" class="input-quantidade-conversao" data-embalagem="embalagem_novo" placeholder="Ex: 1" required>
+                </div>
+
+                <div class="campo-form">
+                    <label for="observacao_novo">Observação:</label>
+                    <input type="text" name="observacao" id="observacao_novo" placeholder="Opcional">
+                </div>
+
+                <div class="preview-conversao" data-preview-for="quantidade_novo">Selecione produto, embalagem e quantidade.</div>
+
+                <button type="submit" class="btn-salvar-producao">Adicionar item</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <section class="card-usuario card-validade-producao">
+            <div class="cabecalho-card-flex">
+                <div>
+                    <h2>Lotes e validades gerados</h2>
+                    <p class="texto-ajuda texto-ajuda-clean">Produtos configurados para controle de validade geram lote automaticamente na confirmação.</p>
+                </div>
+                {% if producao.status == 'Confirmado' %}
+                <form method="POST" action="/producao-realizada/{{ producao.id }}/gerar-lotes">
+                    <button type="submit" class="btn-link-metas">Verificar/gerar lotes</button>
+                </form>
+                {% endif %}
+            </div>
+
+            {% if lotes_validade %}
+            <div class="tabela-responsiva">
+                <table>
+                    <thead><tr><th>Lote</th><th>Produto</th><th>Produção</th><th>Validade</th><th>Saldo do lote</th><th>Status</th><th>Ação</th></tr></thead>
+                    <tbody>
+                    {% for lote in lotes_validade %}
+                    <tr>
+                        <td><span class="codigo-produto">{{ lote.codigo_lote }}</span></td>
+                        <td class="nome-sabor">{{ lote.produto_nome }}</td>
+                        <td>{{ lote.data_producao_br }}</td>
+                        <td>{{ lote.data_validade_br }}</td>
+                        <td>{{ '%.2f'|format(lote.quantidade_atual) }} {{ lote.unidade }}</td>
+                        <td><span class="badge-status {{ lote.classe_status }}">{{ lote.status_calculado }}</span></td>
+                        <td><a href="/validade/{{ lote.id }}" class="btn-link-metas btn-tabela">Abrir</a></td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="mensagem-aviso">Nenhum lote gerado ainda. Produtos sem controle de validade configurado são ignorados.</div>
+            {% endif %}
+        </section>
+
+        <h2>Itens da pré-produção</h2>
+        <div class="tabela-responsiva">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sabor</th>
+                        <th>Produto oficial</th>
+                        <th>Embalagem</th>
+                        <th>Qtd</th>
+                        <th>Unidades</th>
+                        <th>Observação</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in itens %}
+                    <tr class="{% if item.status == 'Cancelado' %}linha-cancelada{% endif %}">
+                        <td class="nome-sabor">{{ item.sabor }}</td>
+
+                        {% if producao.status == "Pendente" and item.status == "Pendente" and not item.estoque_movimentacao_id %}
+                        <form method="POST" action="/producao-realizada/item/{{ item.id }}/atualizar">
+                            <td>
+                                <select name="produto_estoque_id" class="select-produto input-tabela-largo" data-target="embalagem_item_{{ item.id }}" required>
+                                    {% for produto in produtos %}
+                                    <option value="{{ produto.id }}" {% if produto.id == item.produto_estoque_id %}selected{% endif %}>
+                                        {{ produto.codigo }} - {{ produto.nome }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td>
+                                <select name="embalagem_id" id="embalagem_item_{{ item.id }}" class="select-embalagem input-tabela-medio" data-selected="{{ item.embalagem_id or '' }}" required></select>
+                            </td>
+                            <td>
+                                <input type="number" step="0.01" min="0.01" name="quantidade_embalagem" value="{{ '%.2f'|format(item.quantidade_tabuleiros or 0) }}" class="input-tabela-pequeno input-quantidade-conversao" data-embalagem="embalagem_item_{{ item.id }}" data-preview-id="preview_item_{{ item.id }}" required>
+                            </td>
+                            <td>
+                                <div id="preview_item_{{ item.id }}" class="preview-conversao preview-conversao-mini">{{ "%.0f"|format(item.quantidade_unidades or 0) }} {{ item.unidade_padrao or 'un' }}</div>
+                            </td>
+                            <td>
+                                <input type="text" name="observacao" value="{{ item.observacao or '' }}" class="input-tabela-largo" placeholder="Opcional">
+                            </td>
+                            <td>
+                                <span class="badge-status status-pendente">Pendente</span>
+                            </td>
+                            <td class="acoes-tabela-flex">
+                                <button type="submit" class="btn-mini">Salvar</button>
+                        </form>
+                                <form method="POST" action="/producao-realizada/item/{{ item.id }}/cancelar" onsubmit="return confirm('Cancelar este item da pré-produção?');">
+                                    <button type="submit" class="btn-excluir">Cancelar</button>
+                                </form>
+                            </td>
+                        {% else %}
+                            <td>
+                                {% if item.produto_nome %}
+                                    <strong>{{ item.produto_codigo }}</strong> - {{ item.produto_nome }}
+                                {% else %}
+                                    <span class="badge-status status-cancelado">Produto não vinculado</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.embalagem_nome or '-' }}</td>
+                            <td>{{ "%.2f"|format(item.quantidade_tabuleiros or 0) }}</td>
+                            <td class="producao">{{ "%.0f"|format(item.quantidade_unidades or 0) }} {{ item.unidade_padrao or 'un' }}</td>
+                            <td>{{ item.observacao or '-' }}</td>
+                            <td>
+                                <span class="badge-status {% if item.status == 'Pendente' %}status-pendente{% elif item.status == 'Confirmado' %}status-comprado{% else %}status-cancelado{% endif %}">
+                                    {{ item.status }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if item.estoque_movimentacao_id %}
+                                    Movimento #{{ item.estoque_movimentacao_id }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if producao.status == "Pendente" %}
+        <div class="card-usuario card-confirmacao-final">
+            <h2>Confirmar entrada no estoque</h2>
+            <p class="texto-ajuda texto-ajuda-clean">Confirme somente depois de revisar os itens acima. Itens cancelados não serão lançados no estoque.</p>
+            <form method="POST" action="/producao-realizada/confirmar/{{ producao.id }}" class="form-cadastro-simples" onsubmit="return confirm('Confirmar esta produção e lançar entrada no estoque?');">
+                <div class="campo-form">
+                    <label for="observacao_confirmacao">Observação da confirmação:</label>
+                    <input type="text" name="observacao_confirmacao" id="observacao_confirmacao" placeholder="Opcional">
+                </div>
+                <button type="submit" class="btn-salvar-producao">Confirmar produção</button>
+            </form>
+        </div>
+
+        <form method="POST" action="/producao-realizada/cancelar/{{ producao.id }}" onsubmit="return confirm('Cancelar esta pré-produção inteira?');" class="botoes-metas">
+            <button type="submit" class="btn-excluir">Cancelar pré-produção inteira</button>
+        </form>
+        {% endif %}
+
+        <div class="botoes-metas">
+            <a href="/producao-realizada" class="btn-link-avulsas">Voltar</a>
+            <a href="/producao" class="btn-link-metas">Módulo Produção</a>
+            <a href="/estoque/saldo" class="btn-link-metas">Ver saldo</a>
+            <a href="/estoque/historico?origem=Produção+Interna" class="btn-link-metas">Histórico de produção interna</a>
+        </div>
+    </div>
+
+    <script>
+        const embalagensPorProduto = {{ embalagens_por_produto|tojson }};
+
+        function preencherEmbalagens(produtoSelect) {
+            const targetId = produtoSelect.dataset.target;
+            const embalagemSelect = document.getElementById(targetId);
+            if (!embalagemSelect) return;
+
+            const produtoId = produtoSelect.value;
+            const selecionada = embalagemSelect.dataset.selected || embalagemSelect.value;
+            const embalagens = embalagensPorProduto[String(produtoId)] || [];
+
+            embalagemSelect.innerHTML = "";
+
+            if (embalagens.length === 0) {
+                const option = document.createElement("option");
+                option.value = "";
+                option.textContent = "Unidade base";
+                option.dataset.fator = "1";
+                embalagemSelect.appendChild(option);
+            } else {
+                embalagens.forEach((embalagem) => {
+                    const option = document.createElement("option");
+                    option.value = embalagem.id;
+                    option.textContent = `${embalagem.nome} (${embalagem.fator_conversao}x)`;
+                    option.dataset.fator = embalagem.fator_conversao;
+                    if (String(embalagem.id) === String(selecionada)) option.selected = true;
+                    embalagemSelect.appendChild(option);
+                });
+            }
+
+            atualizarPreviews();
+        }
+
+        function atualizarPreview(input) {
+            const embalagemSelect = document.getElementById(input.dataset.embalagem);
+            if (!embalagemSelect) return;
+
+            const option = embalagemSelect.options[embalagemSelect.selectedIndex];
+            const fator = parseFloat(option?.dataset?.fator || "1");
+            const quantidade = parseFloat(String(input.value || "0").replace(",", "."));
+            const resultado = quantidade * fator;
+
+            const previewId = input.dataset.previewId;
+            let preview = previewId ? document.getElementById(previewId) : document.querySelector(`[data-preview-for="${input.id}"]`);
+            if (!preview) return;
+
+            if (!quantidade || quantidade <= 0) {
+                preview.textContent = "Informe uma quantidade.";
+                return;
+            }
+
+            preview.textContent = `${quantidade} × ${option?.textContent || 'Unidade base'} = ${resultado.toFixed(2)} unidades lançadas no estoque`;
+        }
+
+        function atualizarPreviews() {
+            document.querySelectorAll(".input-quantidade-conversao").forEach(atualizarPreview);
+        }
+
+        document.querySelectorAll(".select-produto").forEach((select) => {
+            preencherEmbalagens(select);
+            select.addEventListener("change", () => preencherEmbalagens(select));
+        });
+
+        document.querySelectorAll(".select-embalagem").forEach((select) => {
+            select.addEventListener("change", atualizarPreviews);
+        });
+
+        document.querySelectorAll(".input-quantidade-conversao").forEach((input) => {
+            input.addEventListener("input", () => atualizarPreview(input));
+        });
+
+        atualizarPreviews();
+    </script>
+</body>
+</html>

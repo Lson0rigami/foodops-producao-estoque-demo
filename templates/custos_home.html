@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Custos Gerenciais - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean">
+    {% include '_menu.html' %}
+
+    <section class="dashboard-resumo">
+        <div>
+            <span class="eyebrow">Gestão</span>
+            <h1>Custos Gerenciais</h1>
+            <p>Acompanhe o valor dos produtos enviados às lojas e dos materiais consumidos por centro de custo.</p>
+        </div>
+    </section>
+
+    <form method="GET" class="card-usuario filtros-custos filtros-custos-periodo">
+        <div class="campo-form">
+            <label>Data inicial</label>
+            <input type="date" name="data_inicio" value="{{ data_inicio }}">
+        </div>
+        <div class="campo-form">
+            <label>Data final</label>
+            <input type="date" name="data_fim" value="{{ data_fim }}">
+        </div>
+        <button class="btn-salvar-producao">Atualizar período</button>
+    </form>
+
+    <div class="custos-kpis">
+        <article class="kpi-custo">
+            <span>Enviado às lojas</span>
+            <strong>R$ {{ '%.2f'|format(resumo.lojas) }}</strong>
+            <small>{{ resumo.romaneios }} romaneio(s) com saída registrada</small>
+        </article>
+        <article class="kpi-custo">
+            <span>Centros de custo</span>
+            <strong>R$ {{ '%.2f'|format(resumo.centros) }}</strong>
+            <small>{{ resumo.saidas_centros }} item(ns) atendido(s)</small>
+        </article>
+        <article class="kpi-custo kpi-custo-total">
+            <span>Total gerencial do período</span>
+            <strong>R$ {{ '%.2f'|format(resumo.geral) }}</strong>
+            <small>Somatório de lojas e centros de custo</small>
+        </article>
+    </div>
+
+    <div class="dashboard-grid dashboard-grid-clean">
+        <article class="dashboard-card dashboard-card-clean">
+            <div class="card-topo-clean"><span class="modulo-icon">L</span><span class="badge-modulo">Lojas</span></div>
+            <h2>Custos por Loja</h2>
+            <p>Veja romaneios, produtos, categorias, quantidades e custos congelados no momento da saída.</p>
+            <a href="/custos/lojas?data_inicio={{ data_inicio }}&data_fim={{ data_fim }}" class="btn-primary-clean">Abrir relatório</a>
+        </article>
+
+        <article class="dashboard-card dashboard-card-clean">
+            <div class="card-topo-clean"><span class="modulo-icon">C</span><span class="badge-modulo">Setores</span></div>
+            <h2>Centros de Custo</h2>
+            <p>Acompanhe materiais entregues aos setores e o custo mensal de cada área da empresa.</p>
+            <a href="/custos/centros?data_inicio={{ data_inicio }}&data_fim={{ data_fim }}" class="btn-primary-clean">Abrir relatório</a>
+        </article>
+
+        <article class="dashboard-card dashboard-card-clean">
+            <div class="card-topo-clean"><span class="modulo-icon">P</span><span class="badge-modulo">Produtos</span></div>
+            <h2>Custos dos Produtos</h2>
+            <p>Confira custo padrão, custo calculado pela ficha técnica e alertas de componentes sem custo.</p>
+            <a href="/custos/produtos" class="btn-primary-clean">Revisar custos</a>
+        </article>
+    </div>
+
+    <div class="mensagem-aviso aviso-custo-gerencial">
+        <strong>Importante:</strong> estes valores são gerenciais. Enquanto a entrada por nota fiscal e o custo médio não estiverem implantados, o sistema usa o custo padrão ou o custo calculado pelas fichas técnicas.
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Etiquetas de Produção</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='etiquetas.css') }}">
+</head>
+<body>
+
+    <div class="barra">
+        <h1>Etiquetas de Produção</h1>
+
+        <p>
+            <strong>Cenário:</strong> {{ cenario }} |
+            <strong>Dia:</strong> {{ dia_semana }} |
+            <strong>Total:</strong> {{ total_producao }} etiquetas
+        </p>
+
+        <button onclick="window.print()">Imprimir Etiquetas</button>
+        <a href="/producao">Voltar</a>
+    </div>
+
+    <div class="folha-etiquetas">
+
+        {% for etiqueta in etiquetas %}
+        <div class="etiqueta {% if etiqueta.tipo == 'controle_qualidade' %}etiqueta-controle{% endif %}">
+
+            <div class="empresa">EMPADINHAS BARNABÉ</div>
+
+            {% if etiqueta.tipo == "controle_qualidade" %}
+
+                <div class="sabor controle-titulo">
+                    {{ etiqueta.titulo }}
+                </div>
+
+                <div class="controle-desc">
+                    {{ etiqueta.descricao }}
+                </div>
+
+                <div class="linha">
+                    <span>Data:</span>
+                    <strong>{{ etiqueta.data }}</strong>
+                </div>
+
+                <div class="linha">
+                    <span>Validade:</span>
+                    <strong>{{ etiqueta.validade }}</strong>
+                </div>
+
+                <div class="linha">
+                    <span>Qtd:</span>
+                    <strong>{{ etiqueta.quantidade_empadas }} unidades</strong>
+                </div>
+
+                <div class="lote">
+                    Lote: {{ etiqueta.lote }}
+                </div>
+
+            {% else %}
+
+                <div class="sabor">
+                    <span>TAB:</span>
+                    {{ etiqueta.sabor }}
+                </div>
+
+                <div class="linha">
+                    <span>Data:</span>
+                    <strong>{{ etiqueta.data }}</strong>
+                </div>
+
+                <div class="linha">
+                    <span>Validade:</span>
+                    <strong>{{ etiqueta.validade }}</strong>
+                </div>
+
+                <div class="linha">
+                    <span>Qtd:</span>
+                    <strong>{{ etiqueta.quantidade_empadas }} unidades</strong>
+                </div>
+
+                <div class="linha">
+                    <span>Tabuleiro:</span>
+                    <strong>{{ etiqueta.numero }}/{{ etiqueta.total }}</strong>
+                </div>
+
+            {% endif %}
+
+        </div>
+        {% endfor %}
+
+    </div>
+
+</body>
+</html>

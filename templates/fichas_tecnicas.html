@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Fichas Técnicas - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container container-clean">
+        {% include '_menu.html' %}
+
+        <section class="dashboard-resumo modulo-hero-clean">
+            <div>
+                <span class="eyebrow">Produção • Receita técnica</span>
+                <h1>Fichas Técnicas</h1>
+                <p>Gerencie receitas, componentes, rendimentos e revisões. Fichas já utilizadas ficam protegidas contra exclusão definitiva.</p>
+            </div>
+        </section>
+
+        {% if mensagem_sucesso %}<div class="mensagem-sucesso">{{ mensagem_sucesso }}</div>{% endif %}
+        {% if mensagem_erro %}<div class="mensagem-erro">{{ mensagem_erro }}</div>{% endif %}
+
+        <div class="mensagem-aviso">
+            A ficha técnica ainda não baixa estoque automaticamente. Ela organiza receitas e calcula o consumo previsto para a futura separação e conferência da produção.
+        </div>
+
+        <form method="GET" action="/fichas-tecnicas" class="topo topo-clean filtros-clean">
+            <div class="campo-topo campo-grow">
+                <label for="busca">Buscar:</label>
+                <input type="text" name="busca" id="busca" value="{{ busca }}" placeholder="Código, produto ou tipo">
+            </div>
+
+            <div class="campo-topo">
+                <label for="ativo">Status:</label>
+                <select name="ativo" id="ativo">
+                    <option value="" {% if ativo == "" %}selected{% endif %}>Todos</option>
+                    <option value="1" {% if ativo == "1" %}selected{% endif %}>Ativas</option>
+                    <option value="0" {% if ativo == "0" %}selected{% endif %}>Inativas</option>
+                </select>
+            </div>
+
+            <button type="submit">Filtrar</button>
+            <a href="/fichas-tecnicas/nova" class="btn-link-metas">Nova ficha</a>
+            <a href="/producao" class="btn-link-avulsas">Voltar</a>
+        </form>
+
+        <div class="totais">
+            <p><strong>Fichas ativas:</strong> {{ total_ativas }}</p>
+            <p><strong>Listadas:</strong> {{ fichas|length }}</p>
+        </div>
+
+        {% if fichas %}
+        <div class="tabela-responsiva">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Produto</th>
+                        <th>Categoria</th>
+                        <th>Tipo</th>
+                        <th>Rendimento</th>
+                        <th>Versão</th>
+                        <th>Itens</th>
+                        <th>Uso</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ficha in fichas %}
+                    <tr>
+                        <td>{{ ficha.produto_codigo }}</td>
+                        <td class="nome-sabor">{{ ficha.produto_nome }}</td>
+                        <td>{{ ficha.categoria_nome or '-' }}</td>
+                        <td>{{ ficha.tipo }}</td>
+                        <td>{{ "%.2f"|format(ficha.rendimento_quantidade or 0) }} {{ ficha.rendimento_unidade }}</td>
+                        <td><span class="badge-versao">v{{ ficha.versao or 1 }}</span></td>
+                        <td>{{ ficha.total_itens }}</td>
+                        <td>
+                            {% if ficha.total_utilizacoes > 0 %}
+                                <span class="badge-status status-aviso">{{ ficha.total_utilizacoes }} uso(s)</span>
+                            {% else %}
+                                <span class="texto-fraco">Não usada</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if ficha.ativo == 1 %}
+                                <span class="badge-status status-ok">Ativa</span>
+                            {% else %}
+                                <span class="badge-status status-cancelado">Inativa</span>
+                            {% endif %}
+                        </td>
+                        <td class="acoes-tabela-flex">
+                            <a href="/fichas-tecnicas/{{ ficha.id }}" class="btn-link-metas">Abrir</a>
+                            <a href="/fichas-tecnicas/{{ ficha.id }}/duplicar" class="btn-link-secundario">Duplicar</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="mensagem-sucesso">Nenhuma ficha técnica encontrada.</div>
+        {% endif %}
+    </div>
+</body>
+</html>

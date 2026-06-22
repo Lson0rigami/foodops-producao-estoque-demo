@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Células de Produção - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean">
+    {% include '_menu.html' %}
+
+    <section class="dashboard-resumo modulo-hero-clean">
+        <div>
+            <span class="eyebrow">Estoque • Estrutura interna</span>
+            <h1>Células de Produção</h1>
+            <p>Cadastre os setores que recebem materiais do estoque central antes do consumo real.</p>
+        </div>
+    </section>
+
+    {% if mensagem_sucesso %}<div class="mensagem-sucesso">{{ mensagem_sucesso }}</div>{% endif %}
+    {% if mensagem_erro %}<div class="mensagem-erro">{{ mensagem_erro }}</div>{% endif %}
+
+    <section class="card-usuario">
+        <h2>Nova célula</h2>
+        <form method="POST" class="form-grade-clean form-grade-3">
+            <div class="campo-form">
+                <label>Nome</label>
+                <input type="text" name="nome" placeholder="Ex.: Cocção / Recheios" required>
+            </div>
+            <div class="campo-form">
+                <label>Centro de custo</label>
+                <input type="text" name="centro_custo" placeholder="Opcional">
+            </div>
+            <div class="campo-form campo-form-span-2">
+                <label>Descrição</label>
+                <input type="text" name="descricao" placeholder="Ex.: preparação de recheios e cocção">
+            </div>
+            <div class="campo-form campo-acao-final">
+                <button type="submit">Cadastrar célula</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="card-usuario">
+        <div class="secao-cabecalho-planejamento">
+            <div>
+                <span class="eyebrow">Estrutura</span>
+                <h2>Células cadastradas</h2>
+            </div>
+            <div class="botoes-metas">
+                <a href="/estoque/celulas/saldos" class="btn-link-metas">Ver saldos</a>
+                <a href="/estoque" class="btn-link-avulsas">Voltar ao estoque</a>
+            </div>
+        </div>
+
+        {% if celulas %}
+        <div class="tabela-responsiva">
+            <table>
+                <thead><tr><th>Nome</th><th>Centro de custo</th><th>Descrição</th><th>Status</th><th>Ação</th></tr></thead>
+                <tbody>
+                {% for celula in celulas %}
+                <tr>
+                    <td class="nome-sabor">{{ celula.nome }}</td>
+                    <td>{{ celula.centro_custo or '-' }}</td>
+                    <td>{{ celula.descricao or '-' }}</td>
+                    <td>{% if celula.ativo %}<span class="badge-status status-ok">Ativa</span>{% else %}<span class="badge-status status-neutro">Inativa</span>{% endif %}</td>
+                    <td>
+                        <form method="POST" action="/estoque/celulas/{{ celula.id }}/alternar">
+                            <button type="submit" class="btn-mini">Alternar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="mensagem-aviso">Nenhuma célula cadastrada. Cadastre apenas os setores reais da operação.</div>
+        {% endif %}
+    </section>
+</div>
+</body>
+</html>

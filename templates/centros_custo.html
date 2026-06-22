@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Centros de Custo - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean">
+    {% include '_menu.html' %}
+    <section class="dashboard-resumo modulo-hero-clean">
+        <div><span class="eyebrow">Solicitações internas</span><h1>Centros de Custo</h1><p>Organize os setores usados para controlar materiais e despesas mensais.</p></div>
+    </section>
+
+    {% if mensagem_sucesso %}<div class="mensagem-sucesso">{{ mensagem_sucesso }}</div>{% endif %}
+    {% if mensagem_erro %}<div class="mensagem-erro">{{ mensagem_erro }}</div>{% endif %}
+
+    <form method="POST" class="card-usuario form-grade-clean form-grade-2">
+        <div class="campo-form"><label for="nome">Nome</label><input type="text" name="nome" id="nome" required placeholder="Ex.: Administrativo"></div>
+        <div class="campo-form"><label for="descricao">Descrição</label><input type="text" name="descricao" id="descricao" placeholder="Opcional"></div>
+        <div class="botoes-metas campo-form-span-2"><button type="submit">Cadastrar</button><a href="/solicitacoes-internas" class="btn-link-avulsas">Voltar</a></div>
+    </form>
+
+    <div class="tabela-responsiva">
+        <table>
+            <thead><tr><th>Centro de custo</th><th>Descrição</th><th>Status</th><th>Ação</th></tr></thead>
+            <tbody>
+            {% for centro in centros %}
+            <tr>
+                <td class="nome-sabor">{{ centro.nome }}</td>
+                <td>{{ centro.descricao or '-' }}</td>
+                <td><span class="badge-status {% if centro.ativo %}status-ok{% else %}status-neutro{% endif %}">{{ 'Ativo' if centro.ativo else 'Inativo' }}</span></td>
+                <td><form method="POST" action="/solicitacoes-internas/centros-custo/{{ centro.id }}/alternar"><button type="submit" class="btn-mini">Alternar</button></form></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Fornecedores</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container">
+        {% include '_menu.html' %}
+
+        <h1>Fornecedores</h1>
+
+        {% if mensagem_sucesso %}<div class="mensagem-sucesso">{{ mensagem_sucesso }}</div>{% endif %}
+        {% if mensagem_erro %}<div class="mensagem-erro">{{ mensagem_erro }}</div>{% endif %}
+
+        <div class="card-usuario">
+            <h2>Novo Fornecedor</h2>
+            <form method="POST" action="/compras/fornecedores" class="form-fornecedor">
+                <div class="campo-form"><label>Nome</label><input type="text" name="nome" required></div>
+                <div class="campo-form"><label>Telefone</label><input type="text" name="telefone"></div>
+                <div class="campo-form"><label>Email</label><input type="email" name="email"></div>
+                <div class="campo-form"><label>Observação</label><input type="text" name="observacao"></div>
+                <button type="submit" class="btn-salvar-producao">Cadastrar</button>
+            </form>
+        </div>
+
+        <h2>Fornecedores Cadastrados</h2>
+        <table>
+            <thead><tr><th>Nome</th><th>Telefone</th><th>Email</th><th>Obs.</th><th>Status</th><th>Ação</th></tr></thead>
+            <tbody>
+                {% for fornecedor in fornecedores %}
+                <tr>
+                    <td class="nome-sabor">{{ fornecedor.nome }}</td>
+                    <td>{{ fornecedor.telefone or '-' }}</td>
+                    <td>{{ fornecedor.email or '-' }}</td>
+                    <td>{{ fornecedor.observacao or '-' }}</td>
+                    <td>{% if fornecedor.ativo %}<span class="badge-status status-comprado">Ativo</span>{% else %}<span class="badge-status status-cancelado">Inativo</span>{% endif %}</td>
+                    <td>
+                        <form method="POST" action="/compras/fornecedores/alternar/{{ fornecedor.id }}">
+                            <button type="submit" class="btn-mini">Alternar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="botoes-metas">
+            <a href="/compras/pedidos" class="btn-link-avulsas">Voltar</a>
+        </div>
+    </div>
+</body>
+</html>

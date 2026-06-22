@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalhes do Pedido de Compra</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container">
+        {% include '_menu.html' %}
+
+        <h1>Detalhes do Pedido de Compra</h1>
+
+        {% if pedido %}
+        <div class="info-resumo">
+            <p><strong>Pedido:</strong> #{{ pedido.id }}</p>
+            <p><strong>Solicitante:</strong> {{ pedido.solicitante }}</p>
+            <p><strong>Data:</strong> {{ pedido.data_solicitacao }}</p>
+            <p><strong>Status:</strong> <span class="badge-status status-{{ pedido.status|lower }}">{{ pedido.status }}</span></p>
+        </div>
+
+        {% if pedido.observacao %}
+        <div class="mensagem-aviso">Observação do pedido: {{ pedido.observacao }}</div>
+        {% endif %}
+
+        {% if session.perfil in ["admin", "compras"] and pedido.status == "Pendente" %}
+        <div class="card-usuario">
+            <h2>Confirmar Compra do Pedido Inteiro</h2>
+            <form method="POST" action="/compras/confirmar-pedido/{{ pedido.id }}" class="form-confirmar-compra">
+                <div class="campo-form">
+                    <label>Fornecedor</label>
+                    <input type="text" name="fornecedor_nome" list="lista-fornecedores" placeholder="Digite ou selecione" required>
+                </div>
+                <div class="campo-form">
+                    <label>Data da compra</label>
+                    <input type="date" name="data_compra" required>
+                </div>
+                <div class="campo-form campo-observacao-compra">
+                    <label>Observação</label>
+                    <input type="text" name="observacao_compra" placeholder="Opcional">
+                </div>
+                <button type="submit" class="btn-salvar-producao">Confirmar Tudo</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <datalist id="lista-fornecedores">
+            {% for fornecedor in fornecedores %}
+            <option value="{{ fornecedor.nome }}">
+            {% endfor %}
+        </datalist>
+
+        <h2>Itens</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Descrição</th>
+                    <th>Qtd</th>
+                    <th>Unidade</th>
+                    <th>Categoria</th>
+                    <th>Status</th>
+                    <th>Fornecedor</th>
+                    <th>Data Compra</th>
+                    {% if session.perfil in ["admin", "compras"] %}<th>Confirmar Item</th>{% endif %}
+                    {% if session.perfil in ["admin", "estoque", "compras"] %}<th>Estoque</th>{% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in itens %}
+                <tr>
+                    <td class="nome-sabor">{{ item.descricao }}{% if item.observacao %}<br><small>{{ item.observacao }}</small>{% endif %}</td>
+                    <td>{{ item.quantidade }}</td>
+                    <td>{{ item.unidade }}</td>
+                    <td>{{ item.categoria_nome }}</td>
+                    <td><span class="badge-status status-{{ item.status|lower }}">{{ item.status }}</span></td>
+                    <td>{{ item.fornecedor_nome or '-' }}</td>
+                    <td>{{ item.data_compra or '-' }}</td>
+                    {% if session.perfil in ["admin", "compras"] %}
+                    <td>
+                        {% if item.status == "Pendente" %}
+                        <form method="POST" action="/compras/confirmar-item/{{ item.id }}" class="form-item-inline">
+                            <input type="text" name="fornecedor_nome" list="lista-fornecedores" placeholder="Fornecedor" required>
+                            <input type="date" name="data_compra" required>
+                            <input type="text" name="observacao_compra" placeholder="Obs.">
+                            <button type="submit" class="btn-mini">OK</button>
+                        </form>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                    {% if session.perfil in ["admin", "estoque", "compras"] %}
+                    <td>
+                        {% if item.status == "Comprado" and item.estoque_movimentacao_id %}
+                            <span class="badge-status status-comprado">Lançado</span>
+                        {% elif item.status == "Comprado" %}
+                            <details class="estoque-details">
+                                <summary>Lançar</summary>
+                                <form method="POST" action="/compras/lancar-estoque/{{ item.id }}" class="form-estoque-inline">
+                                    <label>Produto oficial</label>
+                                    <select name="produto_id">
+                                        <option value="">Selecione</option>
+                                        {% for produto in produtos_estoque %}
+                                        <option value="{{ produto.id }}">{{ produto.codigo or ('%04d' % produto.id) }} - {{ produto.nome }} ({{ produto.unidade_padrao }})</option>
+                                        {% endfor %}
+                                    </select>
+                                    <label class="opcao-inline"><input type="radio" name="acao_produto" value="existente" checked> Usar existente</label>
+                                    <label class="opcao-inline"><input type="radio" name="acao_produto" value="novo"> Criar novo</label>
+                                    <input type="text" name="novo_produto_nome" placeholder="Nome novo produto">
+                                    <select name="nova_categoria_id">
+                                        <option value="">Categoria do novo produto</option>
+                                        {% for categoria in categorias_estoque %}
+                                        <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <select name="nova_unidade">
+                                        {% for unidade in unidades %}
+                                        <option value="{{ unidade }}" {% if unidade == item.unidade %}selected{% endif %}>{{ unidade }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <input type="number" step="0.01" min="0.01" name="quantidade" value="{{ item.quantidade }}">
+                                    <input type="date" name="data_movimentacao" required>
+                                    <input type="text" name="observacao" placeholder="Observação opcional">
+                                    <button type="submit" class="btn-mini">Entrada</button>
+                                </form>
+                            </details>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if pedido.status == "Pendente" %}
+        <div class="card-usuario">
+            <h2>Cancelar Pedido</h2>
+            <form method="POST" action="/compras/cancelar-pedido/{{ pedido.id }}" onsubmit="return confirm('Tem certeza que deseja cancelar este pedido?');">
+                <div class="campo-form">
+                    <label>Motivo do cancelamento</label>
+                    <input type="text" name="observacao_cancelamento" class="input-largo" placeholder="Opcional">
+                </div>
+                <br>
+                <button type="submit" class="btn-excluir">Cancelar Pedido</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <div class="botoes-metas">
+            <a href="/compras/pedidos" class="btn-link-avulsas">Voltar aos Pedidos</a>
+            {% if session.perfil in ["admin", "estoque"] %}
+            <a href="/compras/novo" class="btn-link-metas">Nova Solicitação</a>
+            {% endif %}
+        </div>
+
+        {% else %}
+        <div class="mensagem-erro">Pedido não encontrado.</div>
+        <a href="/compras/pedidos" class="btn-link-avulsas">Voltar</a>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head><meta charset="UTF-8"><title>Lote {{ lote.codigo_lote }} - FoodOps Demo</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+<body><div class="container container-clean">{% include '_menu.html' %}
+<section class="dashboard-resumo modulo-hero-clean"><div><span class="eyebrow">Lote {{ lote.codigo_lote }}</span><h1>{{ lote.produto_nome }}</h1><p>Rastreabilidade, localização, saldo por lote e movimentações ligadas ao estoque.</p></div><span class="badge-status {{ lote.classe_status }} badge-status-grande">{{ lote.status_calculado }}</span></section>
+{% if mensagem %}<div class="mensagem-sucesso">{{ mensagem }}</div>{% endif %}{% if erro %}<div class="mensagem-erro">{{ erro }}</div>{% endif %}
+<div class="painel-produto-detalhes painel-validade-detalhes">
+<div class="card-detalhe-produto"><span>Produto</span><strong>{{ lote.produto_codigo }} - {{ lote.produto_nome }}</strong></div>
+<div class="card-detalhe-produto"><span>Produção</span><strong>{{ lote.data_producao_br }}</strong></div>
+<div class="card-detalhe-produto"><span>Validade</span><strong>{{ lote.data_validade_br }}</strong></div>
+<div class="card-detalhe-produto"><span>Saldo do lote</span><strong>{{ '%.2f'|format(lote.quantidade_atual) }} {{ lote.unidade }}</strong></div>
+<div class="card-detalhe-produto"><span>Local</span><strong>{{ lote.celula_nome or lote.local_descricao or lote.local_tipo }}</strong></div>
+</div>
+
+<div class="mensagem-aviso"><strong>Localização:</strong> este campo é rastreabilidade. Alterar o local aqui não transfere saldo entre estoque central e célula; use o módulo de transferências para isso.</div>
+<div class="card-usuario"><h2>Dados do lote</h2><form method="POST" class="form-produto-profissional">
+<div class="campo-form"><label>Data de produção</label><input type="date" name="data_producao" value="{{ lote.data_producao }}" required></div>
+<div class="campo-form"><label>Data de validade</label><input type="date" name="data_validade" value="{{ lote.data_validade }}" required></div>
+<div class="campo-form"><label>Tipo de local</label><select name="local_tipo">{% for local in locais %}<option value="{{ local }}" {% if lote.local_tipo == local %}selected{% endif %}>{{ local }}</option>{% endfor %}</select></div>
+<div class="campo-form"><label>Célula</label><select name="celula_id"><option value="">Nenhuma</option>{% for c in celulas %}<option value="{{ c.id }}" {% if lote.celula_id == c.id %}selected{% endif %}>{{ c.nome }}</option>{% endfor %}</select></div>
+<div class="campo-form"><label>Descrição do local</label><input type="text" name="local_descricao" value="{{ lote.local_descricao or '' }}" placeholder="Ex: Câmara 1, prateleira A"></div>
+<div class="campo-form campo-observacao-compra"><label>Observação</label><input type="text" name="observacao" value="{{ lote.observacao or '' }}"></div>
+<div class="botoes-metas"><button type="submit" class="btn-salvar-producao">Salvar dados</button>{% if lote.producao_realizada_id %}<a href="/producao-realizada/{{ lote.producao_realizada_id }}" class="btn-link-metas">Abrir produção #{{ lote.producao_realizada_id }}</a>{% endif %}</div>
+</form></div>
+
+{% if lote.status_calculado not in ['Cancelado','Encerrado'] %}
+<div class="card-usuario"><h2>Movimentar saldo do lote</h2><div class="mensagem-aviso">A movimentação atualiza o saldo deste lote e também gera a entrada/saída correspondente no estoque geral.</div>
+<form method="POST" action="/validade/{{ lote.id }}/movimentar" class="form-confirmar-compra" onsubmit="return confirm('Confirmar movimentação deste lote?');">
+<div class="campo-form"><label>Tipo</label><select name="tipo" required>{% for tipo in tipos_movimentacao %}<option value="{{ tipo }}">{{ tipo }}</option>{% endfor %}</select></div>
+<div class="campo-form"><label>Quantidade ({{ lote.unidade }})</label><input type="number" step="0.01" min="0.01" name="quantidade" required></div>
+<div class="campo-form"><label>Motivo do descarte</label><select name="motivo_perda_id"><option value="">Selecione quando for descarte...</option>{% for m in motivos_perda %}<option value="{{ m.id }}">{{ m.nome }}</option>{% endfor %}</select></div><div class="campo-form campo-observacao-compra"><label>Detalhes / observação</label><input type="text" name="observacao" placeholder="Obrigatório para descarte e ajustes quando solicitado"></div>
+<button type="submit" class="btn-salvar-producao">Registrar movimentação</button></form></div>
+{% endif %}
+
+<div class="card-usuario"><h2>Destinos deste lote</h2>{% if destinos %}<div class="tabela-responsiva"><table><thead><tr><th>Loja</th><th>Romaneio</th><th>Quantidade</th><th>Status</th><th>Saída</th></tr></thead><tbody>{% for d in destinos %}<tr><td>{{ d.loja_nome }}</td><td><a href="/romaneios/{{ d.romaneio_id }}">{{ d.romaneio_codigo }}</a></td><td>{{ '%.2f'|format(d.quantidade) }} {{ lote.unidade }}</td><td>{{ d.romaneio_status }}</td><td>{{ d.data_saida or '-' }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="mensagem-aviso">Este lote ainda não possui destino em romaneio.</div>{% endif %}<div class="botoes-metas no-print"><a href="/rastreabilidade/lote/{{ lote.id }}" class="btn-link-metas">Abrir rastreabilidade completa</a></div></div>
+
+<div class="card-usuario"><h2>Histórico do lote</h2>{% if movimentacoes %}<div class="tabela-responsiva"><table><thead><tr><th>Data</th><th>Tipo</th><th>Quantidade</th><th>Usuário</th><th>Mov. estoque</th><th>Observação</th></tr></thead><tbody>{% for mov in movimentacoes %}<tr><td>{{ mov.data_movimentacao }}</td><td>{{ mov.tipo }}</td><td>{{ '%.2f'|format(mov.quantidade) }} {{ lote.unidade }}</td><td>{{ mov.usuario }}</td><td>{{ mov.estoque_movimentacao_id or '-' }}</td><td>{{ mov.observacao or '-' }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="mensagem-aviso">Nenhuma movimentação registrada neste lote.</div>{% endif %}</div>
+
+{% if lote.quantidade_atual <= 0 and lote.status_calculado != 'Cancelado' %}<form method="POST" action="/validade/{{ lote.id }}/cancelar" class="botoes-metas" onsubmit="return confirm('Cancelar definitivamente este lote?');"><input type="hidden" name="observacao_cancelamento" value="Cancelado manualmente."><button type="submit" class="btn-excluir">Cancelar lote</button></form>{% endif %}
+<div class="botoes-metas"><a href="/validade" class="btn-link-avulsas">Voltar às validades</a><a href="/estoque/saldo?busca={{ lote.produto_codigo }}" class="btn-link-metas">Ver saldo do produto</a><button onclick="window.print()" class="btn-imprimir no-print">Imprimir ficha do lote</button></div>
+</div></body></html>

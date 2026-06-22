@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Backup do Sistema</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+
+    <div class="container">
+
+        <h1>Backup do Sistema</h1>
+
+        {% if mensagem_sucesso %}
+        <div class="mensagem-sucesso">
+            {{ mensagem_sucesso }}
+        </div>
+        {% endif %}
+
+        <div class="info-resumo">
+            <p>
+                <strong>Importante:</strong>
+                o backup salva uma cópia do banco de dados com metas, histórico e produções salvas.
+            </p>
+        </div>
+
+        <form method="POST" action="/fazer-backup">
+            <button type="submit" class="btn-salvar-producao">
+                Fazer Backup Agora
+            </button>
+
+            <a href="/dashboard" class="btn-link-avulsas">
+                Voltar
+            </a>
+        </form>
+
+        <h2>Backups Criados</h2>
+
+        {% if backups %}
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Arquivo</th>
+                    <th>Tamanho</th>
+                    <th>Baixar</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for backup in backups %}
+                <tr>
+                    <td class="nome-sabor">{{ backup.nome }}</td>
+                    <td>{{ backup.tamanho_kb }} KB</td>
+                    <td>
+                        <a href="/baixar-backup/{{ backup.nome }}" class="btn-link-metas">
+                            Baixar
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% else %}
+
+        <div class="mensagem-sucesso">
+            Nenhum backup criado ainda.
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</body>
+</html>

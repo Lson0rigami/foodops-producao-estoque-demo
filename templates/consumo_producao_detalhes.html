@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Consumo Real #{{ consumo.id }} - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean">
+    {% include '_menu.html' %}
+
+    <section class="dashboard-resumo modulo-hero-clean">
+        <div>
+            <span class="eyebrow">Consumo real #{{ consumo.id }}</span>
+            <h1>{{ consumo.celula_nome }}</h1>
+            <p>Produção #{{ consumo.producao_realizada_id }} • registre utilizado, perda e retorno ao estoque central.</p>
+        </div>
+    </section>
+
+    <div class="info-resumo">
+        <p><strong>Status:</strong>
+            <span class="badge-status {% if consumo.status == 'Rascunho' %}status-pendente{% elif consumo.status == 'Confirmado' %}status-comprado{% else %}status-cancelado{% endif %}">{{ consumo.status }}</span>
+        </p>
+        <p><strong>Produção:</strong> #{{ consumo.producao_realizada_id }} — {{ consumo.producao_status }}</p>
+        <p><strong>Planejamento:</strong> {% if consumo.planejamento_id %}#{{ consumo.planejamento_id }}{% else %}-{% endif %}</p>
+        <p><strong>Centro de custo:</strong> {{ consumo.centro_custo or '-' }}</p>
+        <p><strong>Criado:</strong> {{ consumo.data_criacao }} por {{ consumo.criado_por }}</p>
+    </div>
+
+    <div class="mensagem-aviso">
+        <strong>Regra:</strong> utilizado e perda saem apenas do saldo da célula. A quantidade devolvida sai da célula e retorna ao estoque central. A sobra permanece na célula.
+    </div>
+
+    {% if consumo.status == 'Rascunho' %}
+    <section class="card-usuario">
+        <h2>Adicionar produto com saldo na célula</h2>
+        <form method="POST" action="/consumos-producao/{{ consumo.id }}/adicionar-item" class="form-grade-clean form-grade-3">
+            <div class="campo-form campo-form-span-2">
+                <label>Produto</label>
+                <select name="produto_id" required>
+                    <option value="">Selecione...</option>
+                    {% for produto in produtos_celula %}
+                    <option value="{{ produto.id }}">{{ produto.codigo }} - {{ produto.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="campo-form">
+                <label>Observação</label>
+                <input type="text" name="observacao" placeholder="Opcional">
+            </div>
+            <div><button type="submit">Adicionar item</button></div>
+        </form>
+    </section>
+    {% endif %}
+
+    <form method="POST" action="/consumos-producao/{{ consumo.id }}/salvar" class="form-consumo-real">
+        <section class="card-usuario">
+            <h2>Conferência do consumo</h2>
+            {% if itens %}
+            <div class="tabela-responsiva">
+                <table class="tabela-consumo-real">
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Previsto</th>
+                            <th>Recebido</th>
+                            <th>Saldo atual</th>
+                            <th>Utilizado</th>
+                            <th>Perda</th>
+                            <th>Motivo da perda</th>
+                            <th>Devolver</th>
+                            <th>Sobra estimada</th>
+                            <th>Observação</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in itens %}
+                        <tr data-consumo-row>
+                            <td class="nome-sabor">
+                                {{ item.produto_codigo }} - {{ item.produto_nome }}
+                                <br><small>{{ item.categoria_nome or '-' }} • {{ item.origem }}</small>
+                            </td>
+                            <td>{{ '%.4f'|format(item.quantidade_prevista or 0) }} {{ item.unidade }}</td>
+                            <td>{{ '%.4f'|format(item.quantidade_recebida or 0) }} {{ item.unidade }}</td>
+                            <td data-saldo="{{ item.saldo_atual }}"><strong>{{ '%.4f'|format(item.saldo_atual or 0) }} {{ item.unidade }}</strong></td>
+
+                            {% if consumo.status == 'Rascunho' %}
+                            <td><input class="input-consumo" data-tipo="utilizada" type="number" min="0" step="0.0001" name="utilizada_{{ item.id }}" value="{{ '%.4f'|format(item.quantidade_utilizada or 0) }}"></td>
+                            <td><input class="input-consumo" data-tipo="perda" type="number" min="0" step="0.0001" name="perda_{{ item.id }}" value="{{ '%.4f'|format(item.quantidade_perda or 0) }}"></td>
+                            <td><select name="motivo_perda_id_{{ item.id }}"><option value="">Selecione...</option>{% for m in motivos_perda %}<option value="{{ m.id }}" {% if item.motivo_perda_id == m.id %}selected{% endif %}>{{ m.nome }}</option>{% endfor %}</select><input class="input-observacao-consumo" type="text" name="observacao_perda_{{ item.id }}" value="{{ item.observacao_perda or '' }}" placeholder="Detalhe da perda"></td>
+                            <td><input class="input-consumo" data-tipo="devolvida" type="number" min="0" step="0.0001" name="devolvida_{{ item.id }}" value="{{ '%.4f'|format(item.quantidade_devolvida or 0) }}"></td>
+                            <td class="saldo-estimado" data-unidade="{{ item.unidade }}">{{ '%.4f'|format(item.saldo_estimado or 0) }} {{ item.unidade }}</td>
+                            <td><input class="input-observacao-consumo" type="text" name="observacao_{{ item.id }}" value="{{ item.observacao or '' }}" placeholder="Opcional"></td>
+                            <td>
+                                {% if item.origem == 'Manual' %}
+                                <button type="submit" formaction="/consumos-producao/{{ consumo.id }}/item/{{ item.id }}/remover" formmethod="POST" class="btn-excluir" onclick="return confirm('Remover este item manual?');">Remover</button>
+                                {% else %}-{% endif %}
+                            </td>
+                            {% else %}
+                            <td>{{ '%.4f'|format(item.quantidade_utilizada or 0) }} {{ item.unidade }}</td>
+                            <td>{{ '%.4f'|format(item.quantidade_perda or 0) }} {{ item.unidade }}</td>
+                            <td>{{ item.motivo_perda_nome or '-' }}{% if item.observacao_perda %}<br><small>{{ item.observacao_perda }}</small>{% endif %}</td>
+                            <td>{{ '%.4f'|format(item.quantidade_devolvida or 0) }} {{ item.unidade }}</td>
+                            <td>{{ '%.4f'|format(item.saldo_celula_final or 0) }} {{ item.unidade }}</td>
+                            <td>{{ item.observacao or '-' }}</td>
+                            <td>-</td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="mensagem-aviso">Nenhum item foi incluído neste consumo.</div>
+            {% endif %}
+
+            <div class="campo-observacao-geral">
+                <label for="observacao_geral">Observação geral</label>
+                {% if consumo.status == 'Rascunho' %}
+                <textarea name="observacao_geral" id="observacao_geral">{{ consumo.observacao or '' }}</textarea>
+                {% else %}
+                <p>{{ consumo.observacao or '-' }}</p>
+                {% endif %}
+            </div>
+        </section>
+
+        {% for grupo in resumo %}
+        <div class="totais totais-consumo">
+            <p><strong>Unidade:</strong> {{ grupo.unidade }}</p>
+            <p><strong>Previsto:</strong> {{ '%.4f'|format(grupo.previsto or 0) }}</p>
+            <p><strong>Recebido:</strong> {{ '%.4f'|format(grupo.recebido or 0) }}</p>
+            <p><strong>Utilizado:</strong> {{ '%.4f'|format(grupo.utilizado or 0) }}</p>
+            <p><strong>Perda:</strong> {{ '%.4f'|format(grupo.perda or 0) }}</p>
+            <p><strong>Devolvido:</strong> {{ '%.4f'|format(grupo.devolvido or 0) }}</p>
+        </div>
+        {% endfor %}
+
+        {% if consumo.status == 'Rascunho' %}
+        <div class="card-usuario card-confirmacao-final">
+            {% if consumo.producao_status != 'Confirmado' %}
+            <div class="mensagem-aviso">Você pode salvar o rascunho agora, mas só poderá confirmar depois de confirmar a Produção Realizada #{{ consumo.producao_realizada_id }}.</div>
+            {% endif %}
+            <div class="botoes-metas">
+                <button type="submit" name="acao" value="salvar">Salvar rascunho</button>
+                <button type="submit" name="acao" value="confirmar" class="btn-salvar-producao" {% if consumo.producao_status != 'Confirmado' %}disabled title="Confirme a produção realizada primeiro"{% endif %} onclick="return confirm('Confirmar o consumo e movimentar o saldo da célula?');">Salvar e confirmar consumo</button>
+                <a href="/producao-realizada/{{ consumo.producao_realizada_id }}" class="btn-link-avulsas">Voltar à produção</a>
+            </div>
+        </div>
+        {% else %}
+        <div class="botoes-metas">
+            <a href="/producao-realizada/{{ consumo.producao_realizada_id }}" class="btn-link-avulsas">Voltar à produção</a>
+            <a href="/consumos-producao" class="btn-link-metas">Todos os consumos</a>
+        </div>
+        {% endif %}
+    </form>
+
+    {% if consumo.status == 'Rascunho' %}
+    <form method="POST" action="/consumos-producao/{{ consumo.id }}/cancelar" onsubmit="return confirm('Cancelar este registro de consumo?');" class="no-print form-cancelamento-consumo">
+        <button type="submit" class="btn-excluir">Cancelar consumo</button>
+    </form>
+    {% endif %}
+</div>
+
+<script>
+function numero(input) {
+    return parseFloat(String(input.value || '0').replace(',', '.')) || 0;
+}
+function atualizarLinha(linha) {
+    const saldo = parseFloat(linha.querySelector('[data-saldo]')?.dataset.saldo || '0') || 0;
+    const usada = numero(linha.querySelector('[data-tipo="utilizada"]'));
+    const perda = numero(linha.querySelector('[data-tipo="perda"]'));
+    const devolvida = numero(linha.querySelector('[data-tipo="devolvida"]'));
+    const sobra = saldo - usada - perda - devolvida;
+    const destino = linha.querySelector('.saldo-estimado');
+    if (!destino) return;
+    destino.textContent = `${sobra.toFixed(4)} ${destino.dataset.unidade || ''}`;
+    destino.classList.toggle('saldo-negativo-consumo', sobra < -0.0000001);
+}
+document.querySelectorAll('[data-consumo-row]').forEach((linha) => {
+    linha.querySelectorAll('.input-consumo').forEach((input) => input.addEventListener('input', () => atualizarLinha(linha)));
+    atualizarLinha(linha);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Produto</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container">
+        {% include '_menu.html' %}
+
+        <h1>Editar Produto</h1>
+
+        {% if mensagem_sucesso %}<div class="mensagem-sucesso">{{ mensagem_sucesso }}</div>{% endif %}
+        {% if mensagem_erro %}<div class="mensagem-erro">{{ mensagem_erro }}</div>{% endif %}
+
+        <div class="painel-produto-detalhes">
+            <div class="card-detalhe-produto">
+                <span>Código</span>
+                <strong>{{ produto.codigo or ('%04d' % produto.id) }}</strong>
+            </div>
+            <div class="card-detalhe-produto">
+                <span>Saldo atual</span>
+                <strong class="{% if resumo_produto.status_saldo == 'Negativo' %}texto-negativo{% elif resumo_produto.status_saldo == 'Zerado' %}texto-zerado{% elif resumo_produto.status_saldo == 'Baixo' %}texto-baixo{% else %}texto-ok{% endif %}">
+                    {{ '%.2f'|format(resumo_produto.saldo_atual) }} {{ resumo_produto.unidade }}
+                </strong>
+            </div>
+            <div class="card-detalhe-produto">
+                <span>Status do saldo</span>
+                <strong>{{ resumo_produto.status_saldo }}</strong>
+            </div>
+            <div class="card-detalhe-produto">
+                <span>Cadastro</span>
+                <strong>{{ produto.data_cadastro }}</strong>
+            </div>
+        </div>
+
+        <div class="card-usuario">
+            <h2>Dados do Produto Oficial</h2>
+
+            <form method="POST" class="form-editar-produto">
+                <div class="campo-form campo-codigo-bloqueado">
+                    <label>Código</label>
+                    <input type="text" value="{{ produto.codigo or ('%04d' % produto.id) }}" disabled>
+                </div>
+
+                <div class="campo-form">
+                    <label>Nome do produto</label>
+                    <input type="text" name="nome" value="{{ produto.nome }}" required>
+                </div>
+
+                <div class="campo-form">
+                    <label>Categoria</label>
+                    <select name="categoria_id">
+                        <option value="">Sem categoria</option>
+                        {% for categoria in categorias %}
+                        <option value="{{ categoria.id }}" {% if produto.categoria_id == categoria.id %}selected{% endif %}>{{ categoria.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="campo-form">
+                    <label>Unidade base do saldo</label>
+                    <select name="unidade_padrao" required>
+                        {% for unidade in unidades %}
+                        <option value="{{ unidade }}" {% if produto.unidade_padrao == unidade %}selected{% endif %}>{{ unidade }}</option>
+                        {% endfor %}
+                    </select>
+                    <small>O saldo deste produto sempre será calculado nessa unidade.</small>
+                </div>
+
+                <div class="campo-form">
+                    <label>Estoque mínimo</label>
+                    <input type="number" step="0.01" min="0" name="estoque_minimo" value="{{ produto.estoque_minimo }}">
+                </div>
+
+                <div class="campo-form">
+                    <label>Custo padrão</label>
+                    <input type="number" step="0.0001" min="0" name="custo_padrao" value="{{ produto.custo_padrao or 0 }}">
+                    <small>Valor por {{ produto.unidade_padrao }}. Serve como custo direto ou reserva quando a ficha estiver incompleta.</small>
+                </div>
+
+                <div class="campo-form">
+                    <label>Método de custo</label>
+                    <select name="metodo_custo">
+                        {% for metodo in metodos_custo %}
+                        <option value="{{ metodo }}" {% if (produto.metodo_custo or 'Automático') == metodo %}selected{% endif %}>{{ metodo }}</option>
+                        {% endfor %}
+                    </select>
+                    <small>Automático prioriza a ficha técnica e usa o custo padrão como reserva.</small>
+                </div>
+
+                <div class="campo-form campo-check-produto">
+                    <label>Status do estoque</label>
+                    <label class="check-inline"><input type="checkbox" name="ativo" value="1" {% if produto.ativo %}checked{% endif %}> Ativo no estoque</label>
+                </div>
+
+                <div class="campo-form campo-check-produto">
+                    <label>Venda futura</label>
+                    <label class="check-inline"><input type="checkbox" name="ativo_venda" value="1" {% if produto.ativo_venda %}checked{% endif %}> Ativo para venda</label>
+                </div>
+
+                <div class="campo-form">
+                    <label>Forma de abastecimento</label>
+                    <select name="forma_abastecimento" required>
+                        {% for forma in formas_abastecimento %}
+                        <option value="{{ forma }}" {% if produto.forma_abastecimento == forma %}selected{% endif %}>{{ forma }}</option>
+                        {% endfor %}
+                    </select>
+                    <small>Produzidos internamente entram na demanda da produção. Os demais seguem direto para a expedição.</small>
+                </div>
+
+                <div class="campo-form">
+                    <label>Origem da expedição</label>
+                    <select name="origem_expedicao_id">
+                        <option value="">Não definida</option>
+                        {% for origem in origens_expedicao %}
+                        <option value="{{ origem.id }}" {% if produto.origem_expedicao_id == origem.id %}selected{% endif %}>{{ origem.nome }}{% if not origem.ativo %} (inativa){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                    <small>Define qual almoxarifado separa este produto para as lojas.</small>
+                </div>
+
+                <div class="campo-form">
+                    <label>Ordem no catálogo da loja</label>
+                    <input type="number" name="ordem_loja" value="{{ produto.ordem_loja or 0 }}">
+                </div>
+
+                <div class="campo-form campo-check-produto">
+                    <label>Controle de validade</label>
+                    <label class="check-inline"><input type="checkbox" name="controla_validade" value="1" {% if produto.controla_validade %}checked{% endif %}> Controlar por lote e validade</label>
+                </div>
+
+                <div class="campo-form">
+                    <label>Dias de validade</label>
+                    <input type="number" min="1" name="dias_validade" value="{{ produto.dias_validade or '' }}" placeholder="Ex: 7">
+                    <small>Usado para gerar automaticamente a validade ao confirmar uma produção.</small>
+                </div>
+
+                <div class="campo-form campo-observacao-editar">
+                    <label>Observação</label>
+                    <input type="text" name="observacao" value="{{ produto.observacao or '' }}" placeholder="Opcional">
+                </div>
+
+                <div class="botoes-metas botoes-form-edicao">
+                    <button type="submit" class="btn-salvar-producao">Salvar Alterações</button>
+                    <a href="/estoque/produtos" class="btn-link-avulsas">Voltar</a>
+                    <a href="/estoque/movimentacao?produto_id={{ produto.id }}" class="btn-link-metas">Movimentar</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="card-usuario custo-produto-preview">
+            <div class="titulo-com-acoes">
+                <div>
+                    <h2>Prévia do custo gerencial</h2>
+                    <p>Este cálculo é apenas informativo até a saída ser registrada no romaneio.</p>
+                </div>
+                <a href="/custos/produtos?busca={{ produto.codigo }}" class="btn-link-metas">Abrir custos</a>
+            </div>
+            <div class="painel-produto-detalhes">
+                <div class="card-detalhe-produto"><span>Custo por {{ produto.unidade_padrao }}</span><strong>R$ {{ '%.4f'|format(custo_calculado_atual.custo_unitario or 0) }}</strong></div>
+                <div class="card-detalhe-produto"><span>Origem</span><strong>{{ custo_calculado_atual.origem }}</strong></div>
+                <div class="card-detalhe-produto"><span>Alertas</span><strong>{{ custo_calculado_atual.alertas|length }}</strong></div>
+            </div>
+            {% if custo_calculado_atual.alertas %}<div class="mensagem-aviso mini-lista-alertas">{% for alerta in custo_calculado_atual.alertas[:6] %}<span>{{ alerta }}</span>{% endfor %}</div>{% endif %}
+        </div>
+
+        <div class="card-usuario">
+            <h2>Embalagens e Conversões</h2>
+
+            <div class="info-resumo">
+                <p><strong>Regra:</strong> o saldo sempre fica na unidade base do produto. A embalagem serve apenas para converter entrada/saída.</p>
+                <p><strong>Exemplo:</strong> 10 tabuleiros c/35 = 350 unidades no saldo.</p>
+            </div>
+
+            <form method="POST" action="/estoque/produtos/{{ produto.id }}/embalagens" class="form-confirmar-compra">
+                <div class="campo-form">
+                    <label>Nome da embalagem</label>
+                    <input type="text" name="nome_embalagem" placeholder="Ex: Tabuleiro c/35" required>
+                </div>
+
+                <div class="campo-form">
+                    <label>Equivale a quantas unidades base?</label>
+                    <input type="number" step="0.01" min="0.01" name="fator_conversao" value="1" required>
+                </div>
+
+                <div class="campo-form campo-observacao-compra">
+                    <label>Observação</label>
+                    <input type="text" name="observacao_embalagem" placeholder="Opcional">
+                </div>
+
+                <button type="submit" class="btn-salvar-producao">Adicionar Embalagem</button>
+            </form>
+
+            {% if embalagens %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Embalagem</th>
+                        <th>Conversão</th>
+                        <th>Padrão</th>
+                        <th>Status</th>
+                        <th>Pedido das lojas</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for embalagem in embalagens %}
+                    <tr>
+                        <td class="nome-sabor">{{ embalagem.nome }}</td>
+                        <td>1 {{ embalagem.nome }} = {{ embalagem.fator_conversao }} {{ produto.unidade_padrao }}</td>
+                        <td>{% if embalagem.padrao %}<span class="badge-status status-comprado">Sim</span>{% else %}-{% endif %}</td>
+                        <td>
+                            {% if embalagem.ativo %}
+                            <span class="badge-status status-comprado">Ativa</span>
+                            {% else %}
+                            <span class="badge-status status-cancelado">Inativa</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if embalagem.disponivel_loja %}
+                            <span class="badge-status status-comprado">Permitida</span>
+                            {% else %}
+                            <span class="badge-status status-pendente">Oculta</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="acoes-tabela">
+                                <form method="POST" action="/estoque/produtos/embalagens/alternar/{{ embalagem.id }}">
+                                    <button type="submit" class="btn-mini">Status</button>
+                                </form>
+                                <form method="POST" action="/estoque/produtos/embalagens/loja/{{ embalagem.id }}">
+                                    <button type="submit" class="btn-mini">Loja</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="mensagem-aviso">Nenhuma embalagem cadastrada para este produto.</div>
+            {% endif %}
+        </div>
+
+        <div class="card-usuario">
+            <h2>Últimas Movimentações</h2>
+
+            {% if ultimas_movimentacoes %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Tipo</th>
+                        <th>Origem</th>
+                        <th>Qtd. informada</th>
+                        <th>Saldo lançado</th>
+                        <th>Usuário</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mov in ultimas_movimentacoes %}
+                    <tr>
+                        <td>{{ mov.data_movimentacao }}</td>
+                        <td>{{ mov.tipo }}</td>
+                        <td>{{ mov.origem }}</td>
+                        <td>{{ mov.quantidade_embalagem or mov.quantidade }} {{ mov.embalagem_nome or produto.unidade_padrao }}</td>
+                        <td class="{% if mov.tipo == 'Entrada' %}saldo-ok{% else %}saldo-baixo{% endif %}">{{ '%.2f'|format(mov.quantidade) }} {{ produto.unidade_padrao }}</td>
+                        <td>{{ mov.usuario or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="mensagem-aviso">Este produto ainda não possui movimentações.</div>
+            {% endif %}
+        </div>
+
+    </div>
+</body>
+</html>

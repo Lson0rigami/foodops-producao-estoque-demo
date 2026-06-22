@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Planejamentos de Produção - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container container-clean">
+        {% include '_menu.html' %}
+
+        <section class="dashboard-resumo modulo-hero-clean">
+            <div>
+                <span class="eyebrow">Produção • Planejamento</span>
+                <h1>Planejamentos de Produção</h1>
+                <p>Ordens previstas, consumo técnico, preparação de intermediários e lista de separação do estoque.</p>
+            </div>
+        </section>
+
+        <div class="mensagem-aviso">
+            Planejamento não movimenta saldo. Ele congela as versões das fichas usadas, calcula o previsto e cria uma pré-produção para conferência.
+        </div>
+
+        <form method="GET" action="/planejamentos-producao" class="topo topo-clean filtros-clean">
+            <div class="campo-topo">
+                <label for="status">Status:</label>
+                <select name="status" id="status">
+                    <option value="" {% if status == '' %}selected{% endif %}>Todos</option>
+                    <option value="Rascunho" {% if status == 'Rascunho' %}selected{% endif %}>Rascunho</option>
+                    <option value="Com alertas" {% if status == 'Com alertas' %}selected{% endif %}>Com alertas</option>
+                    <option value="Produção confirmada" {% if status == 'Produção confirmada' %}selected{% endif %}>Produção confirmada</option>
+                    <option value="Cancelado" {% if status == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+                </select>
+            </div>
+            <button type="submit">Filtrar</button>
+            <a href="/producao/calcular" class="btn-link-metas">Novo planejamento</a>
+            <a href="/producao" class="btn-link-avulsas">Voltar</a>
+        </form>
+
+        {% if planejamentos %}
+        <div class="tabela-responsiva">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Criação</th>
+                        <th>Cenário</th>
+                        <th>Dia</th>
+                        <th>Tabuleiros</th>
+                        <th>Unidades</th>
+                        <th>Itens</th>
+                        <th>Alertas</th>
+                        <th>Status</th>
+                        <th>Separação</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for planejamento in planejamentos %}
+                    <tr>
+                        <td><strong>#{{ planejamento.id }}</strong></td>
+                        <td>{{ planejamento.data_criacao }}</td>
+                        <td>{{ planejamento.cenario }}</td>
+                        <td>{{ planejamento.dia_semana }}</td>
+                        <td>{{ "%.2f"|format(planejamento.total_tabuleiros or 0) }}</td>
+                        <td>{{ "%.2f"|format(planejamento.total_unidades or 0) }}</td>
+                        <td>{{ planejamento.total_itens or 0 }}</td>
+                        <td>
+                            {% if planejamento.total_alertas and planejamento.total_alertas > 0 %}
+                                <span class="badge-status status-aviso">{{ planejamento.total_alertas }}</span>
+                            {% else %}
+                                <span class="badge-status status-ok">0</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if planejamento.status == 'Rascunho' %}
+                                <span class="badge-status status-ok">Rascunho</span>
+                            {% elif planejamento.status == 'Com alertas' %}
+                                <span class="badge-status status-aviso">Com alertas</span>
+                            {% elif planejamento.status == 'Produção confirmada' %}
+                                <span class="badge-status status-ok">Confirmada</span>
+                            {% else %}
+                                <span class="badge-status status-cancelado">{{ planejamento.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if planejamento.separacao_status == 'Separado' %}
+                                <span class="badge-status status-ok">Separado</span>
+                            {% elif planejamento.separacao_status in ['Pendente', 'Parcial', 'Aguardando revisão'] %}
+                                <span class="badge-status status-aviso">{{ planejamento.separacao_status }}</span>
+                            {% elif planejamento.separacao_status %}
+                                <span class="badge-status status-cancelado">{{ planejamento.separacao_status }}</span>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td><a href="/planejamentos-producao/{{ planejamento.id }}" class="btn-link-metas">Abrir</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="mensagem-sucesso">Nenhum planejamento encontrado.</div>
+        {% endif %}
+    </div>
+</body>
+</html>

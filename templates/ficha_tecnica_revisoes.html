@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Revisões da Ficha - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container container-clean">
+        {% include '_menu.html' %}
+
+        <section class="dashboard-resumo modulo-hero-clean">
+            <div>
+                <span class="eyebrow">Ficha técnica • Histórico</span>
+                <h1>{{ ficha.produto_codigo }} - {{ ficha.produto_nome }}</h1>
+                <p>Registro das versões geradas por alterações na ficha e nos seus componentes.</p>
+            </div>
+        </section>
+
+        <div class="info-resumo">
+            <p><strong>Versão atual:</strong> v{{ ficha.versao or 1 }}</p>
+            <p><strong>Revisões:</strong> {{ revisoes|length }}</p>
+            <p><strong>Última atualização:</strong> {{ ficha.atualizado_em or ficha.data_cadastro }}</p>
+        </div>
+
+        {% if revisoes %}
+        <div class="tabela-responsiva">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Versão</th>
+                        <th>Ação registrada</th>
+                        <th>Data/Hora</th>
+                        <th>Usuário</th>
+                        <th>Visualizar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for revisao in revisoes %}
+                    <tr>
+                        <td><span class="badge-versao">v{{ revisao.versao }}</span></td>
+                        <td class="nome-sabor">{{ revisao.acao }}</td>
+                        <td>{{ revisao.data_hora }}</td>
+                        <td>{{ revisao.usuario }}</td>
+                        <td><a href="/fichas-tecnicas/{{ ficha.id }}/revisoes/{{ revisao.id }}" class="btn-link-metas">Abrir</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="mensagem-aviso">Nenhuma revisão registrada.</div>
+        {% endif %}
+
+        <div class="botoes-metas">
+            <a href="/fichas-tecnicas/{{ ficha.id }}" class="btn-link-avulsas">Voltar à ficha</a>
+            <a href="/fichas-tecnicas" class="btn-link-metas">Todas as fichas</a>
+        </div>
+    </div>
+</body>
+</html>

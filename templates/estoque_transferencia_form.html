@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Nova Transferência - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean">
+    {% include '_menu.html' %}
+    <section class="dashboard-resumo modulo-hero-clean"><div><span class="eyebrow">Estoque • Transferência</span><h1>Nova Transferência Manual</h1><p>Use para envio avulso a uma célula ou devolução ao estoque central.</p></div></section>
+    {% if erro %}<div class="mensagem-erro">{{ erro }}</div>{% endif %}
+    {% if not celulas %}<div class="mensagem-aviso">Cadastre ao menos uma célula antes de criar transferências.</div>{% endif %}
+    <form method="POST" class="card-usuario form-grade-clean form-grade-2">
+        <div class="campo-form"><label>Tipo</label><select name="tipo" required>{% for opcao in tipos %}<option value="{{ opcao }}">{{ opcao }}</option>{% endfor %}</select></div>
+        <div class="campo-form"><label>Célula</label><select name="celula_id" required><option value="">Selecione</option>{% for celula in celulas %}<option value="{{ celula.id }}">{{ celula.nome }}</option>{% endfor %}</select></div>
+        <div class="campo-form"><label>Produto</label><select name="produto_id" required><option value="">Selecione</option>{% for produto in produtos %}<option value="{{ produto.id }}">{{ produto.codigo }} - {{ produto.nome }} ({{ produto.unidade_padrao }})</option>{% endfor %}</select></div>
+        <div class="campo-form"><label>Quantidade na unidade base</label><input type="number" step="0.0001" min="0.0001" name="quantidade" required></div>
+        <div class="campo-form campo-form-span-2"><label>Observação</label><textarea name="observacao" rows="3" placeholder="Motivo ou referência operacional"></textarea></div>
+        <div class="botoes-metas campo-form-span-2"><button type="submit">Criar rascunho</button><a href="/estoque/transferencias" class="btn-link-avulsas">Cancelar</a></div>
+    </form>
+</div>
+</body>
+</html>

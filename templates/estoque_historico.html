@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Histórico do Estoque</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container">
+        {% include '_menu.html' %}
+        <h1>Histórico do Estoque</h1>
+
+        <div class="cards-resumo-estoque">
+            <div class="card-indicador-estoque">
+                <span>Movimentações</span>
+                <strong>{{ resumo.total_movimentacoes }}</strong>
+            </div>
+            <div class="card-indicador-estoque entrada">
+                <span>Entradas filtradas</span>
+                <strong>{{ '%.2f'|format(resumo.total_entradas) }}</strong>
+            </div>
+            <div class="card-indicador-estoque saida">
+                <span>Saídas filtradas</span>
+                <strong>{{ '%.2f'|format(resumo.total_saidas) }}</strong>
+            </div>
+        </div>
+
+        <form method="GET" action="/estoque/historico" class="form-filtros-estoque form-filtros-historico">
+            <div class="campo-form">
+                <label>Produto</label>
+                <select name="produto_id">
+                    <option value="">Todos</option>
+                    {% for produto in produtos %}
+                    <option value="{{ produto.id }}" {% if filtros.produto_id|string == produto.id|string %}selected{% endif %}>
+                        {{ produto.codigo or ('%04d' % produto.id) }} - {{ produto.nome }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="campo-form">
+                <label>Categoria</label>
+                <select name="categoria_id">
+                    <option value="">Todas</option>
+                    {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}" {% if filtros.categoria_id|string == categoria.id|string %}selected{% endif %}>
+                        {{ categoria.nome }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="campo-form">
+                <label>Tipo</label>
+                <select name="tipo">
+                    <option value="">Todos</option>
+                    {% for tipo in tipos %}
+                    <option value="{{ tipo }}" {% if filtros.tipo == tipo %}selected{% endif %}>{{ tipo }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="campo-form">
+                <label>Origem</label>
+                <select name="origem">
+                    <option value="">Todas</option>
+                    {% for origem in origens %}
+                    <option value="{{ origem }}" {% if filtros.origem == origem %}selected{% endif %}>{{ origem }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="campo-form">
+                <label>De</label>
+                <input type="date" name="data_inicio" value="{{ filtros.data_inicio }}">
+            </div>
+
+            <div class="campo-form">
+                <label>Até</label>
+                <input type="date" name="data_fim" value="{{ filtros.data_fim }}">
+            </div>
+
+            <div class="campo-form campo-botoes-filtro">
+                <button type="submit" class="btn-salvar-producao">Filtrar</button>
+                <a href="/estoque/historico" class="btn-link-avulsas">Limpar</a>
+            </div>
+        </form>
+
+        {% if movimentacoes %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Código</th>
+                    <th>Produto</th>
+                    <th>Categoria</th>
+                    <th>Tipo</th>
+                    <th>Quantidade base</th>
+                    <th>Embalagem</th>
+                    <th>Origem</th>
+                    <th>Fornecedor</th>
+                    <th>Usuário</th>
+                    <th>Observação</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mov in movimentacoes %}
+                <tr>
+                    <td>{{ mov.data_movimentacao }}</td>
+                    <td><span class="codigo-produto">{{ mov.produto_codigo or '-' }}</span></td>
+                    <td class="nome-sabor">{{ mov.produto_nome }}</td>
+                    <td>{{ mov.categoria_nome or '-' }}</td>
+                    <td>
+                        <span class="badge-status {% if mov.tipo == 'Entrada' %}status-comprado{% else %}status-cancelado{% endif %}">
+                            {{ mov.tipo }}
+                        </span>
+                    </td>
+                    <td>{{ mov.quantidade }} {{ mov.unidade_padrao }}</td>
+                    <td>
+                        {% if mov.embalagem_nome %}
+                            {{ mov.quantidade_embalagem or mov.quantidade }} × {{ mov.embalagem_nome }}
+                            {% if mov.fator_conversao %}<br><small>conv. {{ mov.fator_conversao }}</small>{% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ mov.origem }}{% if mov.origem_id %} #{{ mov.origem_id }}{% endif %}</td>
+                    <td>{{ mov.fornecedor_nome or '-' }}</td>
+                    <td>{{ mov.usuario }}</td>
+                    <td class="texto-observacao-tabela">{{ mov.observacao or '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="mensagem-aviso">
+            Nenhuma movimentação encontrada com os filtros aplicados.
+        </div>
+        {% endif %}
+
+        <div class="botoes-metas">
+            <a href="/estoque" class="btn-link-avulsas">Voltar</a>
+            <a href="/estoque/movimentacao" class="btn-link-metas">Nova movimentação</a>
+            <a href="/estoque/saldo" class="btn-link-metas">Saldo Atual</a>
+        </div>
+    </div>
+</body>
+</html>

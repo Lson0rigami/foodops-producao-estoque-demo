@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Produção - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container container-clean">
+        {% include '_menu.html' %}
+
+        <section class="dashboard-resumo modulo-hero-clean">
+            <div>
+                <span class="eyebrow">Módulo operacional</span>
+                <h1>Produção</h1>
+                <p>Metas, cálculo de produção, etiquetas da Argox, produção realizada e histórico.</p>
+            </div>
+        </section>
+
+        <div class="dashboard-grid dashboard-grid-clean producao-grid-home">
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon modulo-icon-producao">M</span>
+                    <span class="badge-modulo">Meta</span>
+                </div>
+                <h2>Calcular Produção</h2>
+                <p>Gere a ordem de produção pelo cenário, dia da semana, estoque inicial e pedidos.</p>
+                <a href="/producao/calcular" class="btn-primary-clean">Abrir cálculo</a>
+            </article>
+
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon modulo-icon-producao">E</span>
+                    <span class="badge-modulo">Argox</span>
+                </div>
+                <h2>Etiquetas</h2>
+                <p>Gere etiquetas a partir da produção calculada ou crie etiquetas avulsas.</p>
+                <a href="/producao/calcular" class="btn-primary-clean">Gerar pela meta</a>
+                <div class="links-secundarios">
+                    <a href="/etiquetas-avulsas">Etiquetas avulsas</a>
+                </div>
+            </article>
+
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon modulo-icon-estoque">R</span>
+                    <span class="badge-modulo">Conferência</span>
+                </div>
+                <h2>Produção Realizada</h2>
+                <p>Confira, ajuste e confirme pré-produções antes de lançar entrada no estoque.</p>
+                <a href="/producao-realizada" class="btn-primary-clean">Abrir produção realizada</a>
+                <div class="links-secundarios">
+                    <a href="/producao-realizada?status=Pendente">{{ total_pre_producoes }} pendentes</a>
+                </div>
+            </article>
+
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon modulo-icon-compras">H</span>
+                    <span class="badge-modulo">Histórico</span>
+                </div>
+                <h2>Histórico</h2>
+                <p>Consulte produções salvas, detalhes, totais e registros anteriores.</p>
+                <a href="/historico" class="btn-primary-clean">Ver histórico</a>
+            </article>
+
+            {% if session.perfil == "admin" %}
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon modulo-icon-admin">C</span>
+                    <span class="badge-modulo">Configuração</span>
+                </div>
+                <h2>Cadastro de Metas</h2>
+                <p>Gerencie metas por sabor, classe, cenário e metas especiais por dia.</p>
+                <a href="/metas" class="btn-primary-clean">Gerenciar metas</a>
+            </article>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Pedidos de Compra</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container">
+        {% include '_menu.html' %}
+
+        <h1>Pedidos de Compra</h1>
+
+        <div class="totais">
+            <p><strong>Pendentes:</strong> {{ total_pendentes }}</p>
+            <p><strong>Filtro:</strong> {{ status }}</p>
+        </div>
+
+        <div class="botoes-metas">
+            {% if session.perfil in ["admin", "estoque"] %}
+            <a href="/compras/novo" class="btn-link-metas">Nova Solicitação</a>
+            {% endif %}
+            <a href="/compras/pedidos?status=Pendente" class="btn-link-avulsas">Pendentes</a>
+            <a href="/compras/pedidos?status=Comprado" class="btn-link-avulsas">Comprados</a>
+            <a href="/compras/pedidos?status=Cancelado" class="btn-link-avulsas">Cancelados</a>
+            <a href="/compras/pedidos?status=Todos" class="btn-link-avulsas">Todos</a>
+            {% if session.perfil in ["admin", "compras"] %}
+            <a href="/compras/relatorios" class="btn-link-backup">Relatórios</a>
+            <a href="/compras/categorias" class="btn-link-metas">Categorias</a>
+            <a href="/compras/fornecedores" class="btn-link-metas">Fornecedores</a>
+            {% endif %}
+            <a href="/dashboard" class="btn-link-avulsas">Voltar</a>
+        </div>
+
+        {% if pedidos %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Solicitante</th>
+                    <th>Data</th>
+                    <th>Status</th>
+                    <th>Itens</th>
+                    <th>Fornecedor</th>
+                    <th>Detalhes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pedido in pedidos %}
+                <tr>
+                    <td>{{ pedido.id }}</td>
+                    <td class="nome-sabor">{{ pedido.solicitante }}</td>
+                    <td>{{ pedido.data_solicitacao }}</td>
+                    <td><span class="badge-status status-{{ pedido.status|lower }}">{{ pedido.status }}</span></td>
+                    <td class="producao">{{ pedido.total_itens }}</td>
+                    <td>{{ pedido.fornecedor_nome or '-' }}</td>
+                    <td><a href="/compras/pedido/{{ pedido.id }}" class="btn-link-metas">Abrir</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="mensagem-sucesso">Nenhum pedido encontrado para este filtro.</div>
+        {% endif %}
+    </div>
+</body>
+</html>

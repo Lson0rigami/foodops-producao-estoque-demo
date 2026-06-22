@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Previsto x Realizado - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean">
+    {% include '_menu.html' %}
+
+    <section class="dashboard-resumo modulo-hero-clean">
+        <div>
+            <span class="eyebrow">Produção • Indicadores</span>
+            <h1>Previsto x Realizado</h1>
+            <p>Compare a meta planejada, a produção confirmada e o consumo real registrado nas células.</p>
+        </div>
+    </section>
+
+    <form method="GET" class="card-usuario filtros-grade filtros-analise no-print">
+        <div class="campo-form">
+            <label>Status da produção</label>
+            <select name="status">
+                <option value="">Todos</option>
+                {% for opcao in ['Pendente', 'Confirmado', 'Cancelado'] %}
+                <option value="{{ opcao }}" {% if status == opcao %}selected{% endif %}>{{ opcao }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="campo-form campo-acao-final"><button type="submit">Filtrar</button></div>
+        <div class="campo-form campo-acao-final"><a href="/producao" class="btn-link-avulsas">Voltar à Produção</a></div>
+    </form>
+
+    <div class="totais">
+        <p><strong>Produções confirmadas com planejamento:</strong> {{ total_analises }}</p>
+        <p><strong>Registros listados:</strong> {{ producoes|length }}</p>
+    </div>
+
+    <section class="card-usuario">
+        {% if producoes %}
+        <div class="tabela-responsiva">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Produção</th>
+                        <th>Planejamento</th>
+                        <th>Data / cenário</th>
+                        <th>Previsto</th>
+                        <th>Realizado</th>
+                        <th>Consumos</th>
+                        <th>Situação</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for producao in producoes %}
+                    <tr>
+                        <td>#{{ producao.id }}<br><small>{{ producao.status }}</small></td>
+                        <td>#{{ producao.planejamento_id }}<br><small>{{ producao.planejamento_status }}</small></td>
+                        <td>{{ producao.data_criacao }}<br><small>{{ producao.cenario }} • {{ producao.dia_semana }}</small></td>
+                        <td>{{ "%.0f"|format(producao.previsto_total_unidades or 0) }} un</td>
+                        <td>{{ "%.0f"|format(producao.total_unidades or 0) }} un</td>
+                        <td>
+                            {{ producao.consumos_confirmados or 0 }} confirmado(s)
+                            {% if producao.consumos_rascunho %}<br><small>{{ producao.consumos_rascunho }} rascunho(s)</small>{% endif %}
+                        </td>
+                        <td>
+                            <span class="badge-status
+                                {% if producao.situacao_analise == 'Com consumo confirmado' %}status-comprado
+                                {% elif producao.situacao_analise in ['Aguardando consumo', 'Consumo parcial', 'Produção pendente'] %}status-pendente
+                                {% else %}status-cancelado{% endif %}">
+                                {{ producao.situacao_analise }}
+                            </span>
+                        </td>
+                        <td><a href="/analises-producao/{{ producao.id }}" class="btn-link-metas">Analisar</a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="mensagem-aviso">Nenhuma produção com planejamento foi encontrada.</div>
+        {% endif %}
+    </section>
+</div>
+</body>
+</html>

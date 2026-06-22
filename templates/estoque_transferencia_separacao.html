@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Transferir Separação - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean">
+    {% include '_menu.html' %}
+    <section class="dashboard-resumo modulo-hero-clean"><div><span class="eyebrow">Estoque • Separação #{{ separacao.id }}</span><h1>Enviar para Célula</h1><p>Crie um rascunho com as quantidades já separadas e ainda não transferidas.</p></div></section>
+    {% if erro %}<div class="mensagem-erro">{{ erro }}</div>{% endif %}
+    {% if not celulas %}<div class="mensagem-aviso">Nenhuma célula ativa. Cadastre uma célula antes de continuar.</div>{% endif %}
+    <form method="POST">
+        <section class="card-usuario">
+            <div class="campo-form largura-media"><label>Célula de destino</label><select name="celula_destino_id" required><option value="">Selecione</option>{% for celula in celulas %}<option value="{{ celula.id }}">{{ celula.nome }}</option>{% endfor %}</select></div>
+            <div class="tabela-responsiva"><table>
+                <thead><tr><th>Produto</th><th>Separado</th><th>Já transferido</th><th>Disponível para transferir</th><th>Transferir agora</th></tr></thead>
+                <tbody>{% for item in itens %}<tr>
+                    <td class="nome-sabor">{{ item.produto_codigo }} - {{ item.produto_nome }}</td>
+                    <td>{{ '%.4f'|format(item.quantidade_separada or 0) }} {{ item.unidade }}</td>
+                    <td>{{ '%.4f'|format(item.quantidade_transferida or 0) }} {{ item.unidade }}</td>
+                    <td>{{ '%.4f'|format(item.quantidade_a_transferir or 0) }} {{ item.unidade }}</td>
+                    <td><input type="number" step="0.0001" min="0" max="{{ item.quantidade_a_transferir }}" name="quantidade_transferir_{{ item.id }}" value="{{ '%.4f'|format(item.quantidade_a_transferir or 0) }}" {% if item.quantidade_a_transferir <= 0 %}disabled{% endif %}></td>
+                </tr>{% endfor %}</tbody>
+            </table></div>
+            <div class="campo-form"><label>Observação</label><textarea name="observacao" rows="3" placeholder="Ex.: envio para produção do turno"></textarea></div>
+        </section>
+        <div class="botoes-metas"><button type="submit" {% if not celulas %}disabled{% endif %}>Criar transferência</button><a href="/estoque/separacoes/{{ separacao.id }}" class="btn-link-avulsas">Voltar</a></div>
+    </form>
+</div>
+</body>
+</html>

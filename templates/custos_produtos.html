@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Custos dos Produtos - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean container-wide">
+    {% include '_menu.html' %}
+    <section class="dashboard-resumo"><div><span class="eyebrow">Custos gerenciais</span><h1>Custos dos Produtos</h1><p>Revise o custo usado nas saídas e identifique fichas ou insumos ainda sem valor.</p></div></section>
+
+    <div class="mensagem-aviso"><strong>Regra:</strong> no método Automático, o sistema tenta calcular pela ficha técnica. Se não conseguir gerar um custo positivo, utiliza o custo padrão. O romaneio congela o valor no momento da saída.</div>
+
+    <form method="GET" class="card-usuario filtros-custos">
+        <div class="campo-form campo-produto-filtro"><label>Buscar</label><input name="busca" value="{{ busca }}" placeholder="Código ou produto"></div>
+        <div class="campo-form"><label>Categoria</label><select name="categoria_id"><option value="">Todas</option>{% for categoria in categorias %}<option value="{{ categoria.id }}" {% if categoria_id == categoria.id|string %}selected{% endif %}>{{ categoria.nome }}</option>{% endfor %}</select></div>
+        <label class="check-inline filtro-alerta"><input type="checkbox" name="somente_alertas" value="1" {% if somente_alertas %}checked{% endif %}> Mostrar apenas produtos com alerta</label>
+        <div class="botoes-inline"><button class="btn-salvar-producao">Filtrar</button><a href="/custos/produtos" class="btn-link-avulsas">Limpar</a></div>
+    </form>
+
+    <section class="card-usuario">
+        {% if produtos %}<div class="tabela-scroll"><table><thead><tr><th>Código</th><th>Produto</th><th>Categoria</th><th>Método</th><th>Custo padrão</th><th>Custo usado</th><th>Origem</th><th>Alertas</th><th>Ação</th></tr></thead><tbody>
+        {% for produto in produtos %}<tr><td>{{ produto.codigo }}</td><td class="nome-sabor">{{ produto.nome }}</td><td>{{ produto.categoria_nome or 'Sem categoria' }}</td><td>{{ produto.metodo_custo or 'Automático' }}</td><td>R$ {{ '%.4f'|format(produto.custo_padrao or 0) }}/{{ produto.unidade_padrao }}</td><td class="valor-custo">R$ {{ '%.4f'|format(produto.custo_calculado) }}/{{ produto.unidade_padrao }}</td><td>{{ produto.origem_custo }}</td><td>{% if produto.alertas_custo %}<details class="alertas-custo"><summary>{{ produto.alertas_custo|length }} alerta(s)</summary>{% for alerta in produto.alertas_custo %}<span>{{ alerta }}</span>{% endfor %}</details>{% else %}<span class="badge-status status-comprado">OK</span>{% endif %}</td><td><a href="/estoque/produtos/editar/{{ produto.id }}" class="btn-mini">Editar produto</a></td></tr>{% endfor %}
+        </tbody></table></div>{% else %}<div class="mensagem-aviso">Nenhum produto encontrado.</div>{% endif %}
+    </section>
+
+    <div class="botoes-metas"><a href="/custos" class="btn-link-avulsas">Voltar aos custos</a></div>
+</div>
+</body>
+</html>

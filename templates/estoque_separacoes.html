@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Separações do Estoque - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container container-clean">
+        {% include '_menu.html' %}
+
+        <section class="dashboard-resumo modulo-hero-clean">
+            <div>
+                <span class="eyebrow">Estoque • Planejamento</span>
+                <h1>Listas de Separação</h1>
+                <p>Registre o que foi separado fisicamente para cada planejamento de produção.</p>
+            </div>
+        </section>
+
+        <div class="mensagem-aviso">
+            Esta etapa não baixa o saldo. Ela compara o previsto com o disponível e registra a separação física. A transferência para células de produção será uma etapa futura.
+        </div>
+
+        <form method="GET" action="/estoque/separacoes" class="topo topo-clean filtros-clean">
+            <div class="campo-topo campo-grow">
+                <label for="busca">Buscar:</label>
+                <input type="text" name="busca" id="busca" value="{{ busca }}" placeholder="Nº da separação, planejamento ou dia">
+            </div>
+            <div class="campo-topo">
+                <label for="status">Status:</label>
+                <select name="status" id="status">
+                    <option value="" {% if status == '' %}selected{% endif %}>Todos</option>
+                    <option value="Pendente" {% if status == 'Pendente' %}selected{% endif %}>Pendente</option>
+                    <option value="Parcial" {% if status == 'Parcial' %}selected{% endif %}>Parcial</option>
+                    <option value="Separado" {% if status == 'Separado' %}selected{% endif %}>Separado</option>
+                    <option value="Aguardando revisão" {% if status == 'Aguardando revisão' %}selected{% endif %}>Aguardando revisão</option>
+                    <option value="Sem itens" {% if status == 'Sem itens' %}selected{% endif %}>Sem itens</option>
+                    <option value="Cancelado" {% if status == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+                    <option value="Encerrado" {% if status == 'Encerrado' %}selected{% endif %}>Encerrado</option>
+                </select>
+            </div>
+            <button type="submit">Filtrar</button>
+            <a href="/estoque" class="btn-link-avulsas">Voltar</a>
+        </form>
+
+        <div class="info-resumo">
+            <p><strong>Pendentes/parciais:</strong> {{ total_pendentes }}</p>
+            <p><strong>Listadas:</strong> {{ separacoes|length }}</p>
+        </div>
+
+        {% if separacoes %}
+        <div class="tabela-responsiva">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Separação</th>
+                        <th>Planejamento</th>
+                        <th>Criação</th>
+                        <th>Cenário</th>
+                        <th>Dia</th>
+                        <th>Progresso</th>
+                        <th>Alertas</th>
+                        <th>Status</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sep in separacoes %}
+                    <tr>
+                        <td><strong>#{{ sep.id }}</strong></td>
+                        <td>#{{ sep.planejamento_id }}</td>
+                        <td>{{ sep.data_criacao }}</td>
+                        <td>{{ sep.cenario }}</td>
+                        <td>{{ sep.dia_semana }}</td>
+                        <td>{{ sep.itens_separados or 0 }}/{{ sep.total_itens or 0 }}</td>
+                        <td>
+                            {% if sep.total_alertas and sep.total_alertas > 0 %}
+                                <span class="badge-status status-aviso">{{ sep.total_alertas }}</span>
+                            {% else %}<span class="badge-status status-ok">0</span>{% endif %}
+                        </td>
+                        <td>
+                            {% if sep.status == 'Separado' %}
+                                <span class="badge-status status-ok">Separado</span>
+                            {% elif sep.status in ['Pendente', 'Parcial', 'Aguardando revisão'] %}
+                                <span class="badge-status status-aviso">{{ sep.status }}</span>
+                            {% else %}
+                                <span class="badge-status status-cancelado">{{ sep.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td><a href="/estoque/separacoes/{{ sep.id }}" class="btn-link-metas">Abrir</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="mensagem-sucesso">Nenhuma lista de separação encontrada.</div>
+        {% endif %}
+    </div>
+</body>
+</html>

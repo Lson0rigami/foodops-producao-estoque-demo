@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Módulo de Compras</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container">
+        {% include '_menu.html' %}
+
+        <div class="modulo-titulo">
+            <h1>Compras</h1>
+            <p>Solicitações, aprovações, fornecedores e relatórios de compras.</p>
+        </div>
+
+        <div class="dashboard-grid dashboard-grid-compacto">
+            {% if session.perfil in ["admin", "estoque"] %}
+            <div class="dashboard-card">
+                <span class="dashboard-icone">➕</span>
+                <h2>Solicitar Compra</h2>
+                <p>Crie uma solicitação com um ou vários itens para o setor de compras.</p>
+                <a href="/compras/novo" class="btn-link-metas">Nova Solicitação</a>
+            </div>
+            {% endif %}
+
+            <div class="dashboard-card">
+                <span class="dashboard-icone">📋</span>
+                <h2>Pedidos</h2>
+                <p>Acompanhe pedidos pendentes, comprados e cancelados.</p>
+                <a href="/compras/pedidos" class="btn-link-historico">Ver Pedidos</a>
+                <span class="badge-status status-pendente">{{ total_pendentes }} pendentes</span>
+            </div>
+
+            {% if session.perfil in ["admin", "compras"] %}
+            <div class="dashboard-card">
+                <span class="dashboard-icone">🧾</span>
+                <h2>Notas de Entrada</h2>
+                <p>Registre compras normais, bonificações e despesas sem movimentar o estoque.</p>
+                <a href="/compras/notas" class="btn-link-metas">Abrir Notas</a>
+            </div>
+
+            <div class="dashboard-card">
+                <span class="dashboard-icone">📊</span>
+                <h2>Relatórios</h2>
+                <p>Filtre compras por período, categoria e fornecedor.</p>
+                <a href="/compras/relatorios" class="btn-link-backup">Abrir Relatórios</a>
+            </div>
+
+            <div class="dashboard-card">
+                <span class="dashboard-icone">🏷️</span>
+                <h2>Categorias</h2>
+                <p>Organize os itens em bebidas, limpeza, câmara fria e outras categorias.</p>
+                <a href="/compras/categorias" class="btn-link-metas">Gerenciar Categorias</a>
+            </div>
+
+            <div class="dashboard-card">
+                <span class="dashboard-icone">🏢</span>
+                <h2>Fornecedores</h2>
+                <p>Cadastre e gerencie fornecedores usados nas confirmações de compra.</p>
+                <a href="/compras/fornecedores" class="btn-link-avulsas">Gerenciar Fornecedores</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Novo Consumo Real - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean">
+    {% include '_menu.html' %}
+
+    <section class="dashboard-resumo modulo-hero-clean">
+        <div>
+            <span class="eyebrow">Produção #{{ producao.id }}</span>
+            <h1>Novo Consumo Real</h1>
+            <p>Escolha a célula que executou esta etapa. Cada célula terá seu próprio registro de consumo.</p>
+        </div>
+    </section>
+
+    <div class="info-resumo">
+        <p><strong>Produção:</strong> #{{ producao.id }}</p>
+        <p><strong>Status:</strong> {{ producao.status }}</p>
+        <p><strong>Planejamento:</strong> {% if producao.planejamento_id %}#{{ producao.planejamento_id }}{% else %}-{% endif %}</p>
+        <p><strong>Total:</strong> {{ '%.0f'|format(producao.total_unidades or 0) }} un</p>
+    </div>
+
+    <div class="mensagem-aviso">
+        O rascunho não movimenta saldo. Os itens são sugeridos conforme as transferências confirmadas para a célula e o planejamento vinculado.
+    </div>
+
+    <section class="card-usuario largura-media">
+        {% if celulas %}
+        <form method="POST" class="form-grade-clean">
+            <div class="campo-form">
+                <label for="celula_id">Célula de produção</label>
+                <select name="celula_id" id="celula_id" required>
+                    <option value="">Selecione...</option>
+                    {% for celula in celulas %}
+                    <option value="{{ celula.id }}">{{ celula.nome }}{% if celula.centro_custo %} • {{ celula.centro_custo }}{% endif %}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="campo-form">
+                <label for="observacao">Observação</label>
+                <textarea name="observacao" id="observacao" rows="4" placeholder="Ex: consumo da montagem das empadas"></textarea>
+            </div>
+            <div class="botoes-metas">
+                <button type="submit">Criar rascunho</button>
+                <a href="/producao-realizada/{{ producao.id }}" class="btn-link-avulsas">Voltar</a>
+            </div>
+        </form>
+        {% else %}
+        <div class="mensagem-aviso">Todas as células disponíveis já possuem um registro para esta produção, ou nenhuma célula ativa foi cadastrada.</div>
+        <a href="/producao-realizada/{{ producao.id }}" class="btn-link-avulsas">Voltar</a>
+        {% endif %}
+    </section>
+</div>
+</body>
+</html>

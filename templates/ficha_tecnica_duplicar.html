@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Duplicar Ficha Técnica - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container container-clean">
+        {% include '_menu.html' %}
+
+        <section class="dashboard-resumo modulo-hero-clean">
+            <div>
+                <span class="eyebrow">Ficha técnica • Duplicação segura</span>
+                <h1>Duplicar {{ ficha.produto_codigo }} - {{ ficha.produto_nome }}</h1>
+                <p>A nova ficha receberá os mesmos dados, componentes, quantidades e status. Revise-a antes de usar.</p>
+            </div>
+        </section>
+
+        {% if mensagem_erro %}<div class="mensagem-erro">{{ mensagem_erro }}</div>{% endif %}
+
+        <div class="info-resumo">
+            <p><strong>Origem:</strong> {{ ficha.produto_nome }}</p>
+            <p><strong>Tipo:</strong> {{ ficha.tipo }}</p>
+            <p><strong>Rendimento:</strong> {{ "%.4f"|format(ficha.rendimento_quantidade or 0) }} {{ ficha.rendimento_unidade }}</p>
+            <p><strong>Versão:</strong> v{{ ficha.versao or 1 }}</p>
+        </div>
+
+        <div class="card-usuario">
+            <h2>Produto de destino</h2>
+            {% if produtos %}
+            <form method="POST" class="form-cadastro-simples form-grid-5">
+                <div class="campo-form campo-grid-span-2">
+                    <label for="produto_destino_id">Novo produto final:</label>
+                    <select name="produto_destino_id" id="produto_destino_id" required>
+                        <option value="">Selecione um produto sem ficha...</option>
+                        {% for produto in produtos %}
+                        <option value="{{ produto.id }}">{{ produto.codigo }} - {{ produto.nome }}{% if produto.categoria_nome %} • {{ produto.categoria_nome }}{% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="campo-form campo-grid-span-2">
+                    <label for="observacao_extra">Observação adicional:</label>
+                    <input type="text" name="observacao_extra" id="observacao_extra" placeholder="Ex: cópia base para conferência">
+                </div>
+
+                <button type="submit" class="btn-salvar-producao">Duplicar ficha</button>
+                <a href="/fichas-tecnicas/{{ ficha.id }}" class="btn-link-avulsas">Cancelar</a>
+            </form>
+            {% else %}
+            <div class="mensagem-aviso">Não há produtos ativos sem ficha técnica disponíveis para receber a cópia.</div>
+            <a href="/fichas-tecnicas/{{ ficha.id }}" class="btn-link-avulsas">Voltar</a>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

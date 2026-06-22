@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Produção - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container container-clean">
+        {% include '_menu.html' %}
+
+        <section class="dashboard-resumo modulo-hero-clean">
+            <div>
+                <span class="eyebrow">Módulo operacional</span>
+                <h1>Produção</h1>
+                <p>Metas, planejamento técnico, etiquetas da Argox, produção realizada e histórico.</p>
+            </div>
+        </section>
+
+        <div class="dashboard-grid dashboard-grid-clean producao-grid-home">
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon modulo-icon-producao">P</span>
+                    <span class="badge-modulo">Pedidos das lojas</span>
+                </div>
+                <h2>Fechamento de Pedidos</h2>
+                <p>Feche manualmente os pedidos por data e congele a demanda que alimentará a produção.</p>
+                <a href="/pedidos-lojas/fechamentos" class="btn-primary-clean">Abrir fechamentos</a>
+                <div class="links-secundarios"><span>{{ total_rodadas_abertas }} rodadas abertas</span></div>
+            </article>
+
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon modulo-icon-producao">M</span>
+                    <span class="badge-modulo">Meta + demanda</span>
+                </div>
+                <h2>Calcular Produção</h2>
+                <p>Informe apenas o início da câmara. Pedidos fechados e mistos são puxados automaticamente.</p>
+                <a href="/producao/calcular" class="btn-primary-clean">Abrir cálculo</a>
+            </article>
+
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon modulo-icon-estoque">P</span>
+                    <span class="badge-modulo">Consumo previsto</span>
+                </div>
+                <h2>Planejamento</h2>
+                <p>Veja produtos acabados, intermediários e a lista consolidada para separação do estoque.</p>
+                <a href="/planejamentos-producao" class="btn-primary-clean">Abrir planejamentos</a>
+                <div class="links-secundarios">
+                    <a href="/planejamentos-producao?status=Rascunho">{{ total_planejamentos }} abertos</a>
+                </div>
+            </article>
+
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon modulo-icon-producao">E</span>
+                    <span class="badge-modulo">Avulsas</span>
+                </div>
+                <h2>Etiquetas Avulsas</h2>
+                <p>Reimprima etiquetas, gere etiquetas restantes ou crie etiquetas de tabuleiros mistos.</p>
+                <a href="/etiquetas-avulsas" class="btn-primary-clean">Abrir etiquetas avulsas</a>
+            </article>
+
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon modulo-icon-estoque">R</span>
+                    <span class="badge-modulo">Conferência</span>
+                </div>
+                <h2>Produção Realizada</h2>
+                <p>Confira, ajuste e confirme pré-produções antes de lançar entrada no estoque.</p>
+                <a href="/producao-realizada" class="btn-primary-clean">Abrir produção realizada</a>
+                <div class="links-secundarios">
+                    <a href="/producao-realizada?status=Pendente">{{ total_pre_producoes }} pendentes</a>
+                </div>
+            </article>
+
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon modulo-icon-producao">C</span>
+                    <span class="badge-modulo">Real x previsto</span>
+                </div>
+                <h2>Consumo Real</h2>
+                <p>Registre o que cada célula utilizou, perdeu, devolveu e manteve como saldo.</p>
+                <a href="/consumos-producao" class="btn-primary-clean">Abrir consumos</a>
+                <div class="links-secundarios">
+                    <a href="/consumos-producao?status=Rascunho">{{ total_consumos_reais }} rascunhos</a>
+                </div>
+            </article>
+
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon modulo-icon-compras">A</span>
+                    <span class="badge-modulo">Indicadores</span>
+                </div>
+                <h2>Previsto x Realizado</h2>
+                <p>Compare produção planejada, produção confirmada, consumo real e perdas registradas.</p>
+                <a href="/analises-producao" class="btn-primary-clean">Abrir análises</a>
+                <div class="links-secundarios">
+                    <a href="/analises-producao?status=Confirmado">{{ total_analises }} disponíveis</a>
+                </div>
+            </article>
+
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon modulo-icon-producao">V</span>
+                    <span class="badge-modulo">Lotes e datas</span>
+                </div>
+                <h2>Validades</h2>
+                <p>Acompanhe lotes produzidos, vencimentos, itens críticos, descartes e rastreabilidade por data.</p>
+                <a href="/validade" class="btn-primary-clean">Abrir validades</a>
+                <div class="links-secundarios">
+                    <span>{{ resumo_validade.alertas }} alertas</span>
+                    <a href="/validade?status=Vencido">{{ resumo_validade['Vencido'] }} vencidos</a>
+                </div>
+            </article>
+
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean"><span class="modulo-icon modulo-icon-producao">R</span><span class="badge-modulo">Caminho do lote</span></div>
+                <h2>Rastreabilidade</h2><p>Acompanhe origem, produção, células, movimentações, romaneios e lojas de destino.</p>
+                <a href="/rastreabilidade" class="btn-primary-clean">Rastrear lotes</a><div class="links-secundarios"><a href="/perdas">Perdas e descartes</a></div>
+            </article>
+
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon modulo-icon-admin">F</span>
+                    <span class="badge-modulo">Receita técnica</span>
+                </div>
+                <h2>Ficha Técnica</h2>
+                <p>Cadastre receitas técnicas de empadas, recheios e produtos preparados, sem baixar estoque ainda.</p>
+                <a href="/fichas-tecnicas" class="btn-primary-clean">Abrir fichas técnicas</a>
+                <div class="links-secundarios">
+                    <a href="/fichas-tecnicas">{{ total_fichas_tecnicas }} ativas</a>
+                </div>
+            </article>
+
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon modulo-icon-compras">H</span>
+                    <span class="badge-modulo">Histórico</span>
+                </div>
+                <h2>Histórico</h2>
+                <p>Consulte produções salvas, detalhes, totais e registros anteriores.</p>
+                <a href="/historico" class="btn-primary-clean">Ver histórico</a>
+            </article>
+
+            {% if session.perfil == "admin" %}
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon modulo-icon-admin">C</span>
+                    <span class="badge-modulo">Configuração</span>
+                </div>
+                <h2>Cadastro de Metas</h2>
+                <p>Gerencie metas por sabor, classe, cenário e metas especiais por dia.</p>
+                <a href="/metas" class="btn-primary-clean">Gerenciar metas</a>
+            </article>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

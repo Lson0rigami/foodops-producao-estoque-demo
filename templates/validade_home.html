@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Validades - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean">
+    {% include '_menu.html' %}
+
+    <section class="dashboard-resumo modulo-hero-clean">
+        <div>
+            <span class="eyebrow">Rastreabilidade por data</span>
+            <h1>Lotes e Validades</h1>
+            <p>Controle o que foi produzido, quanto ainda existe, onde está e quando vence.</p>
+        </div>
+        <div class="botoes-metas no-print"><a href="/rastreabilidade" class="btn-primary-clean">Rastreabilidade</a><a href="/perdas" class="btn-link-metas">Perdas</a><a href="/validade/novo" class="btn-link-avulsas">Novo lote manual</a></div>
+    </section>
+
+    <div class="validade-resumo-grid">
+        <a href="/validade?status=Vencido" class="validade-resumo-card validade-card-vencido"><span>Vencidos</span><strong>{{ resumo['Vencido'] }}</strong></a>
+        <a href="/validade?status=Vence+hoje" class="validade-resumo-card validade-card-hoje"><span>Vencem hoje</span><strong>{{ resumo['Vence hoje'] }}</strong></a>
+        <a href="/validade?status=Crítico" class="validade-resumo-card validade-card-critico"><span>Críticos (1–2 dias)</span><strong>{{ resumo['Crítico'] }}</strong></a>
+        <a href="/validade?status=Próximo" class="validade-resumo-card validade-card-proximo"><span>Próximos (3–5 dias)</span><strong>{{ resumo['Próximo'] }}</strong></a>
+        <a href="/validade?status=Ativo" class="validade-resumo-card validade-card-ativo"><span>Ativos</span><strong>{{ resumo['Ativo'] }}</strong></a>
+        <a href="/validade?status=Encerrado" class="validade-resumo-card validade-card-encerrado"><span>Encerrados</span><strong>{{ resumo['Encerrado'] }}</strong></a>
+    </div>
+
+    <form method="GET" class="topo filtro-validade no-print">
+        <div class="campo-topo campo-filtro-flex"><label>Buscar</label><input type="text" name="busca" value="{{ busca }}" placeholder="Lote, produto ou local"></div>
+        <div class="campo-topo"><label>Status</label><select name="status"><option value="">Todos</option>{% for opcao in status_opcoes %}<option value="{{ opcao }}" {% if status == opcao %}selected{% endif %}>{{ opcao }}</option>{% endfor %}</select></div>
+        <div class="campo-topo"><label>Produto</label><select name="produto_id"><option value="">Todos</option>{% for produto in produtos %}<option value="{{ produto.id }}" {% if produto_id|string == produto.id|string %}selected{% endif %}>{{ produto.codigo }} - {{ produto.nome }}</option>{% endfor %}</select></div>
+        <div class="campo-topo"><label>Validade de</label><input type="date" name="data_inicio" value="{{ data_inicio }}"></div>
+        <div class="campo-topo"><label>até</label><input type="date" name="data_fim" value="{{ data_fim }}"></div>
+        <button type="submit">Filtrar</button>
+        <a href="/validade" class="btn-link-avulsas">Limpar</a>
+    </form>
+
+    <div class="tabela-responsiva">
+    <table>
+        <thead><tr><th>Lote</th><th>Produto</th><th>Produção</th><th>Validade</th><th>Dias</th><th>Saldo</th><th>Local</th><th>Status</th><th>Ação</th></tr></thead>
+        <tbody>
+        {% for lote in lotes %}
+        <tr class="{% if lote.status_calculado == 'Vencido' %}linha-validade-vencida{% endif %}">
+            <td><span class="codigo-produto">{{ lote.codigo_lote }}</span></td>
+            <td class="nome-sabor"><strong>{{ lote.produto_codigo }}</strong> - {{ lote.produto_nome }}</td>
+            <td>{{ lote.data_producao_br }}</td>
+            <td>{{ lote.data_validade_br }}</td>
+            <td>{% if lote.dias_para_vencer is none %}-{% elif lote.dias_para_vencer < 0 %}{{ lote.dias_para_vencer|abs }} dia(s) vencido{% else %}{{ lote.dias_para_vencer }} dia(s){% endif %}</td>
+            <td>{{ '%.2f'|format(lote.quantidade_atual) }} {{ lote.unidade }}</td>
+            <td>{{ lote.celula_nome or lote.local_descricao or lote.local_tipo }}</td>
+            <td><span class="badge-status {{ lote.classe_status }}">{{ lote.status_calculado }}</span></td>
+            <td><a href="/validade/{{ lote.id }}" class="btn-link-metas btn-tabela">Detalhes</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9">Nenhum lote encontrado para os filtros informados.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+    <div class="botoes-metas no-print"><a href="/producao" class="btn-link-avulsas">Produção</a><a href="/estoque" class="btn-link-metas">Estoque</a><button onclick="window.print()" class="btn-imprimir">Imprimir consulta</button></div>
+</div>
+</body>
+</html>

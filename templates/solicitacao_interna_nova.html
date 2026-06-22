@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Nova Solicitação Interna - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean">
+    {% include '_menu.html' %}
+
+    <section class="dashboard-resumo modulo-hero-clean">
+        <div>
+            <span class="eyebrow">Solicitações internas</span>
+            <h1>Nova Solicitação</h1>
+            <p>Selecione um destino principal e adicione somente produtos oficiais do estoque.</p>
+        </div>
+    </section>
+
+    {% if mensagem_erro %}<div class="mensagem-erro">{{ mensagem_erro }}</div>{% endif %}
+
+    <div class="mensagem-aviso">
+        Produto ainda não cadastrado não deve ser digitado livremente. Nesse caso, faça uma solicitação ao setor de Compras.
+    </div>
+
+    <form method="POST" id="form-solicitacao">
+        <section class="card-usuario form-grade-clean form-grade-3">
+            <div class="campo-form">
+                <label for="destino_tipo">Tipo de destino</label>
+                <select name="destino_tipo" id="destino_tipo" required onchange="alternarDestino()">
+                    <option value="Centro de Custo" {% if dados_form.get('destino_tipo') == 'Centro de Custo' %}selected{% endif %}>Centro de Custo</option>
+                    <option value="Célula" {% if dados_form.get('destino_tipo') == 'Célula' %}selected{% endif %}>Célula de Produção</option>
+                </select>
+            </div>
+            <div class="campo-form" id="campo-centro-custo">
+                <label for="centro_custo_id">Centro de custo</label>
+                <select name="centro_custo_id" id="centro_custo_id">
+                    <option value="">Selecione</option>
+                    {% for centro in centros_custo %}<option value="{{ centro.id }}">{{ centro.nome }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="campo-form escondido" id="campo-celula">
+                <label for="celula_id">Célula</label>
+                <select name="celula_id" id="celula_id">
+                    <option value="">Selecione</option>
+                    {% for celula in celulas %}<option value="{{ celula.id }}">{{ celula.nome }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="campo-form">
+                <label for="prioridade">Prioridade</label>
+                <select name="prioridade" id="prioridade">
+                    {% for prioridade in prioridades %}<option value="{{ prioridade }}">{{ prioridade }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="campo-form">
+                <label for="data_necessidade">Necessário para</label>
+                <input type="date" name="data_necessidade" id="data_necessidade" value="{{ data_hoje }}">
+            </div>
+            <div class="campo-form campo-form-span-3">
+                <label for="observacao">Observação geral</label>
+                <textarea name="observacao" id="observacao" rows="3" placeholder="Motivo, turno, responsável ou informação importante"></textarea>
+            </div>
+        </section>
+
+        <section class="card-usuario">
+            <div class="secao-cabecalho-planejamento">
+                <div>
+                    <span class="eyebrow">Itens</span>
+                    <h2>Produtos solicitados</h2>
+                    <p>A quantidade será convertida para a unidade base do saldo.</p>
+                </div>
+                <button type="button" class="btn-mini" onclick="adicionarLinha()">Adicionar item</button>
+            </div>
+
+            <div class="tabela-responsiva">
+                <table class="tabela-itens-solicitacao">
+                    <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Embalagem</th>
+                        <th>Quantidade</th>
+                        <th>Conversão</th>
+                        <th>Observação</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody id="itens-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <div class="botoes-metas">
+            <button type="submit" class="btn-salvar-producao">Enviar solicitação</button>
+            <a href="/solicitacoes-internas" class="btn-link-avulsas">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<template id="linha-template">
+<tr class="linha-item-solicitacao">
+    <td>
+        <select name="produto_id[]" class="produto-select" required onchange="atualizarProduto(this)">
+            <option value="">Selecione</option>
+            {% for produto in produtos %}
+            <option value="{{ produto.id }}" data-unidade="{{ produto.unidade_padrao }}">{{ produto.codigo }} - {{ produto.nome }}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td><select name="embalagem_id[]" class="embalagem-select" onchange="atualizarPrevia(this.closest('tr'))"></select></td>
+    <td><input type="number" name="quantidade[]" class="quantidade-input" step="0.0001" min="0.0001" required oninput="atualizarPrevia(this.closest('tr'))"></td>
+    <td class="preview-conversao texto-fraco">Selecione o produto</td>
+    <td><input type="text" name="observacao_item[]" placeholder="Opcional"></td>
+    <td><button type="button" class="btn-excluir" onclick="removerLinha(this)">Remover</button></td>
+</tr>
+</template>
+
+<script>
+const embalagensPorProduto = {{ embalagens_por_produto|tojson }};
+
+function alternarDestino() {
+    const tipo = document.getElementById('destino_tipo').value;
+    const centro = document.getElementById('campo-centro-custo');
+    const celula = document.getElementById('campo-celula');
+    const centroSelect = document.getElementById('centro_custo_id');
+    const celulaSelect = document.getElementById('celula_id');
+
+    if (tipo === 'Célula') {
+        centro.classList.add('escondido');
+        celula.classList.remove('escondido');
+        centroSelect.required = false;
+        celulaSelect.required = true;
+    } else {
+        celula.classList.add('escondido');
+        centro.classList.remove('escondido');
+        celulaSelect.required = false;
+        centroSelect.required = true;
+    }
+}
+
+function adicionarLinha() {
+    const template = document.getElementById('linha-template');
+    document.getElementById('itens-body').appendChild(template.content.cloneNode(true));
+}
+
+function removerLinha(botao) {
+    const linhas = document.querySelectorAll('.linha-item-solicitacao');
+    if (linhas.length <= 1) return;
+    botao.closest('tr').remove();
+}
+
+function atualizarProduto(select) {
+    const linha = select.closest('tr');
+    const embalagemSelect = linha.querySelector('.embalagem-select');
+    const produtoId = select.value;
+    const unidade = select.options[select.selectedIndex]?.dataset.unidade || 'un';
+    const embalagens = embalagensPorProduto[String(produtoId)] || [];
+
+    embalagemSelect.innerHTML = '';
+    if (embalagens.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = unidade + ' (unidade base)';
+        option.dataset.fator = '1';
+        option.dataset.nome = unidade;
+        embalagemSelect.appendChild(option);
+    } else {
+        embalagens.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.id;
+            option.textContent = `${item.nome} (× ${Number(item.fator_conversao).toLocaleString('pt-BR')})`;
+            option.dataset.fator = item.fator_conversao;
+            option.dataset.nome = item.nome;
+            embalagemSelect.appendChild(option);
+        });
+    }
+    atualizarPrevia(linha);
+}
+
+function atualizarPrevia(linha) {
+    const produtoSelect = linha.querySelector('.produto-select');
+    const embalagemSelect = linha.querySelector('.embalagem-select');
+    const quantidade = Number(String(linha.querySelector('.quantidade-input').value || 0).replace(',', '.'));
+    const unidade = produtoSelect.options[produtoSelect.selectedIndex]?.dataset.unidade || 'un';
+    const option = embalagemSelect.options[embalagemSelect.selectedIndex];
+    const fator = Number(option?.dataset.fator || 1);
+    const nome = option?.dataset.nome || unidade;
+    const total = quantidade * fator;
+    linha.querySelector('.preview-conversao').textContent = `${quantidade || 0} ${nome} = ${total.toLocaleString('pt-BR', {maximumFractionDigits: 4})} ${unidade}`;
+}
+
+alternarDestino();
+adicionarLinha();
+</script>
+</body>
+</html>

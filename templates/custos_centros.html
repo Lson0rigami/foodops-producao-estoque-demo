@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Custos por Centro - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean container-wide">
+    {% include '_menu.html' %}
+    <section class="dashboard-resumo"><div><span class="eyebrow">Custos gerenciais</span><h1>Custos por Centro de Custo</h1><p>Materiais entregues aos setores por meio das solicitações internas.</p></div></section>
+
+    <form method="GET" class="card-usuario filtros-custos">
+        <div class="campo-form"><label>Data inicial</label><input type="date" name="data_inicio" value="{{ data_inicio }}"></div>
+        <div class="campo-form"><label>Data final</label><input type="date" name="data_fim" value="{{ data_fim }}"></div>
+        <div class="campo-form"><label>Centro de custo</label><select name="centro_custo_id"><option value="">Todos</option>{% for centro in centros %}<option value="{{ centro.id }}" {% if centro_custo_id == centro.id|string %}selected{% endif %}>{{ centro.nome }}</option>{% endfor %}</select></div>
+        <div class="botoes-inline"><button class="btn-salvar-producao">Filtrar</button><a href="/custos/centros" class="btn-link-avulsas">Limpar</a></div>
+    </form>
+
+    <div class="custos-kpis"><article class="kpi-custo kpi-custo-total"><span>Total do período</span><strong>R$ {{ '%.2f'|format(total_geral) }}</strong><small>{{ detalhes|length }} item(ns) atendido(s)</small></article><article class="kpi-custo"><span>Centros com consumo</span><strong>{{ resumo|length }}</strong><small>Setores no filtro atual</small></article></div>
+
+    <section class="card-usuario">
+        <h2>Resumo por setor</h2>
+        {% if resumo %}<table><thead><tr><th>Centro de custo</th><th>Itens atendidos</th><th>Total</th></tr></thead><tbody>{% for item in resumo %}<tr><td class="nome-sabor">{{ item.centro_custo }}</td><td>{{ item.itens }}</td><td class="valor-custo">R$ {{ '%.2f'|format(item.total) }}</td></tr>{% endfor %}</tbody></table>{% else %}<div class="mensagem-aviso">Nenhum custo encontrado.</div>{% endif %}
+    </section>
+
+    <section class="card-usuario">
+        <div class="titulo-com-acoes"><div><h2>Detalhamento</h2><p>O custo unitário fica congelado quando o atendimento é confirmado.</p></div><button class="btn-imprimir" onclick="window.print()">Imprimir</button></div>
+        {% if detalhes %}<div class="tabela-scroll"><table><thead><tr><th>Data</th><th>Solicitação</th><th>Centro</th><th>Produto</th><th>Quantidade</th><th>Custo unit.</th><th>Total</th><th>Solicitante</th><th>Confirmado por</th></tr></thead><tbody>{% for item in detalhes %}<tr><td>{{ item.data_confirmacao }}</td><td>{{ item.codigo }}</td><td>{{ item.centro_custo_nome }}</td><td class="nome-sabor">{{ item.produto_codigo }} - {{ item.produto_nome }}</td><td>{{ '%.4f'|format(item.quantidade_atendida_base) }} {{ item.unidade }}</td><td>R$ {{ '%.4f'|format(item.custo_unitario_snapshot) }}</td><td class="valor-custo">R$ {{ '%.2f'|format(item.custo_total_snapshot) }}</td><td>{{ item.solicitante }}</td><td>{{ item.confirmado_por }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="mensagem-aviso">Nenhum atendimento encontrado.</div>{% endif %}
+    </section>
+
+    <div class="botoes-metas"><a href="/custos" class="btn-link-avulsas">Voltar aos custos</a></div>
+</div>
+</body>
+</html>

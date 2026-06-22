@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Transferência #{{ transferencia.id }} - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean">
+    {% include '_menu.html' %}
+    <section class="dashboard-resumo modulo-hero-clean"><div><span class="eyebrow">Estoque • Transferência #{{ transferencia.id }}</span><h1>{{ transferencia.tipo }}</h1><p>{{ transferencia.celula_origem_nome or 'Estoque Central' }} → {{ transferencia.celula_destino_nome or 'Estoque Central' }}</p></div></section>
+    {% if mensagem %}<div class="mensagem-sucesso">{{ mensagem }}</div>{% endif %}
+    {% if erro %}<div class="mensagem-erro">{{ erro }}</div>{% endif %}
+
+    <div class="painel-produto-detalhes planejamento-resumo-grid">
+        <div class="card-detalhe-produto"><span>Status</span><strong>{{ transferencia.status }}</strong></div>
+        <div class="card-detalhe-produto"><span>Origem</span><strong>{{ transferencia.celula_origem_nome or 'Estoque Central' }}</strong></div>
+        <div class="card-detalhe-produto"><span>Destino</span><strong>{{ transferencia.celula_destino_nome or 'Estoque Central' }}</strong></div>
+        <div class="card-detalhe-produto"><span>Separação</span><strong>{% if transferencia.separacao_id %}#{{ transferencia.separacao_id }}{% else %}-{% endif %}</strong></div>
+    </div>
+
+    <section class="card-usuario">
+        <div class="tabela-responsiva"><table><thead><tr><th>Produto</th><th>Categoria</th><th>Quantidade</th><th>Observação</th></tr></thead><tbody>{% for item in itens %}<tr><td class="nome-sabor">{{ item.produto_codigo }} - {{ item.produto_nome }}</td><td>{{ item.categoria_nome or '-' }}</td><td>{{ '%.4f'|format(item.quantidade or 0) }} {{ item.unidade }}</td><td>{{ item.observacao or '-' }}</td></tr>{% endfor %}</tbody></table></div>
+        {% if transferencia.observacao %}<div class="info-resumo"><p><strong>Observação:</strong> {{ transferencia.observacao }}</p></div>{% endif %}
+    </section>
+
+    <div class="botoes-metas">
+        {% if transferencia.status == 'Rascunho' %}
+        <form method="POST" action="/estoque/transferencias/{{ transferencia.id }}/confirmar" onsubmit="return confirm('Confirmar a transferência e movimentar os saldos?');"><button type="submit" class="btn-salvar-producao">Confirmar transferência</button></form>
+        <form method="POST" action="/estoque/transferencias/{{ transferencia.id }}/cancelar" onsubmit="return confirm('Cancelar este rascunho?');"><button type="submit" class="btn-excluir">Cancelar rascunho</button></form>
+        {% endif %}
+        {% if transferencia.separacao_id %}<a href="/estoque/separacoes/{{ transferencia.separacao_id }}" class="btn-link-metas">Abrir separação</a>{% endif %}
+        <a href="/estoque/transferencias" class="btn-link-avulsas">Voltar</a>
+    </div>
+
+    <div class="mensagem-aviso">A confirmação movimenta o saldo central e o saldo da célula. Ela ainda não registra consumo de produção.</div>
+</div>
+</body>
+</html>

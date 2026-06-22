@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Produção Realizada - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container container-clean">
+        {% include '_menu.html' %}
+
+        <section class="dashboard-resumo">
+            <div>
+                <span class="eyebrow">Produção</span>
+                <h1>Produção Realizada</h1>
+                <p>Pré-produções criadas a partir das etiquetas da Argox para conferência e entrada no estoque.</p>
+            </div>
+        </section>
+
+        <div class="info-resumo">
+            <p><strong>Regra:</strong> gerar etiquetas cria uma pré-produção. A entrada no estoque só acontece depois da confirmação.</p>
+            <p><strong>Pendentes:</strong> {{ total_pendentes }}</p>
+        </div>
+
+        <form method="GET" action="/producao-realizada" class="topo topo-producao">
+            <div class="campo-topo">
+                <label for="status">Status:</label>
+                <select name="status" id="status">
+                    <option value="" {% if status == "" %}selected{% endif %}>Todos</option>
+                    <option value="Pendente" {% if status == "Pendente" %}selected{% endif %}>Pendente</option>
+                    <option value="Confirmado" {% if status == "Confirmado" %}selected{% endif %}>Confirmado</option>
+                    <option value="Cancelado" {% if status == "Cancelado" %}selected{% endif %}>Cancelado</option>
+                </select>
+            </div>
+            <button type="submit">Filtrar</button>
+            <a href="/producao" class="btn-link-avulsas">Voltar à Produção</a>
+        </form>
+
+        {% if producoes %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Data</th>
+                    <th>Cenário</th>
+                    <th>Dia</th>
+                    <th>Tabuleiros</th>
+                    <th>Unidades</th>
+                    <th>Status</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producao in producoes %}
+                <tr>
+                    <td>#{{ producao.id }}</td>
+                    <td>{{ producao.data_criacao }}</td>
+                    <td>{{ producao.cenario }}</td>
+                    <td>{{ producao.dia_semana }}</td>
+                    <td class="producao">{{ "%.0f"|format(producao.total_tabuleiros or 0) }}</td>
+                    <td>{{ "%.0f"|format(producao.total_unidades or 0) }}</td>
+                    <td>
+                        <span class="badge-status {% if producao.status == 'Pendente' %}status-pendente{% elif producao.status == 'Confirmado' %}status-comprado{% else %}status-cancelado{% endif %}">
+                            {{ producao.status }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="/producao-realizada/{{ producao.id }}" class="btn-link-metas">Ver detalhes</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="mensagem-aviso">Nenhuma pré-produção encontrada.</div>
+        {% endif %}
+    </div>
+</body>
+</html>

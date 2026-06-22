@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Saldo do Estoque</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container">
+        {% include '_menu.html' %}
+
+        <h1>Saldo Atual do Estoque</h1>
+
+        <div class="info-resumo">
+            <p>
+                <strong>Regra:</strong>
+                saldo = entradas - saídas. A consulta pode ser filtrada por categoria, produto ou situação.
+            </p>
+        </div>
+
+        <div class="painel-resumo-categorias">
+            {% for categoria in resumo_categorias %}
+            <div class="card-resumo-categoria">
+                <h3>{{ categoria.categoria }}</h3>
+                <p>{{ categoria.produtos }} produto(s)</p>
+                <div class="mini-status-grid">
+                    <span class="mini-status ok">OK: {{ categoria.ok }}</span>
+                    <span class="mini-status baixo">Baixo: {{ categoria.baixo }}</span>
+                    <span class="mini-status zerado">Zerado: {{ categoria.zerado }}</span>
+                    <span class="mini-status negativo">Negativo: {{ categoria.negativo }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <form method="GET" action="/estoque/saldo" class="form-filtros-estoque">
+            <div class="campo-form campo-filtro-largo">
+                <label>Buscar</label>
+                <input
+                    type="text"
+                    name="busca"
+                    value="{{ filtros.busca }}"
+                    placeholder="Código, produto ou categoria"
+                >
+            </div>
+
+            <div class="campo-form">
+                <label>Categoria</label>
+                <select name="categoria_id">
+                    <option value="">Todas</option>
+                    {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}" {% if filtros.categoria_id|string == categoria.id|string %}selected{% endif %}>
+                        {{ categoria.nome }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="campo-form">
+                <label>Status</label>
+                <select name="status">
+                    <option value="">Todos</option>
+                    <option value="OK" {% if filtros.status == "OK" %}selected{% endif %}>OK</option>
+                    <option value="Baixo" {% if filtros.status == "Baixo" %}selected{% endif %}>Baixo</option>
+                    <option value="Zerado" {% if filtros.status == "Zerado" %}selected{% endif %}>Zerado</option>
+                    <option value="Negativo" {% if filtros.status == "Negativo" %}selected{% endif %}>Negativo</option>
+                </select>
+            </div>
+
+            <div class="campo-form campo-botoes-filtro">
+                <button type="submit" class="btn-salvar-producao">Filtrar</button>
+                <a href="/estoque/saldo" class="btn-link-avulsas">Limpar</a>
+            </div>
+        </form>
+
+        {% if saldos %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Produto</th>
+                    <th>Categoria</th>
+                    <th>Saldo</th>
+                    <th>Unidade</th>
+                    <th>Mínimo</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in saldos %}
+                <tr>
+                    <td><span class="codigo-produto">{{ item.codigo or ('%04d' % item.id) }}</span></td>
+                    <td class="nome-sabor">{{ item.nome }}</td>
+                    <td>{{ item.categoria_nome or '-' }}</td>
+
+                    {% if item.status_saldo == 'Negativo' %}
+                    <td class="saldo-negativo">{{ '%.2f'|format(item.saldo_atual) }}</td>
+                    {% elif item.status_saldo == 'Zerado' %}
+                    <td class="saldo-zerado">{{ '%.2f'|format(item.saldo_atual) }}</td>
+                    {% elif item.status_saldo == 'Baixo' %}
+                    <td class="saldo-baixo">{{ '%.2f'|format(item.saldo_atual) }}</td>
+                    {% else %}
+                    <td class="saldo-ok">{{ '%.2f'|format(item.saldo_atual) }}</td>
+                    {% endif %}
+
+                    <td>{{ item.unidade_padrao }}</td>
+                    <td>{{ item.estoque_minimo }}</td>
+                    <td>
+                        {% if item.status_saldo == 'Negativo' %}
+                            <span class="badge-status status-negativo">Negativo</span>
+                        {% elif item.status_saldo == 'Zerado' %}
+                            <span class="badge-status status-cancelado">Zerado</span>
+                        {% elif item.status_saldo == 'Baixo' %}
+                            <span class="badge-status status-pendente">Baixo</span>
+                        {% else %}
+                            <span class="badge-status status-comprado">OK</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="mensagem-aviso">
+            Nenhum produto encontrado com os filtros aplicados.
+        </div>
+        {% endif %}
+
+        <div class="botoes-metas">
+            <a href="/estoque" class="btn-link-avulsas">Voltar</a>
+            <a href="/estoque/movimentacao" class="btn-link-metas">Nova movimentação</a>
+            <a href="/estoque/historico" class="btn-link-metas">Histórico</a>
+        </div>
+    </div>
+</body>
+</html>

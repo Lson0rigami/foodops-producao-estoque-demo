@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Acesso Negado</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+
+    <div class="container">
+
+        <h1>Acesso Negado</h1>
+
+        <div class="mensagem-erro">
+            {{ mensagem }}
+        </div>
+
+        <a href="/producao" class="btn-link-avulsas">
+            Voltar para o sistema
+        </a>
+
+    </div>
+
+</body>
+</html>

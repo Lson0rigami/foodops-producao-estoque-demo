@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro de Metas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+
+    <div class="container">
+
+        <h1>Cadastro de Metas</h1>
+
+        <div class="info-resumo">
+            <p>
+                <strong>Atenção:</strong>
+                campos vazios nas metas por dia significam que o sistema usará o cenário.
+            </p>
+        </div>
+
+        <div class="info-resumo">
+            <p>
+                <strong>Segunda-feira e Quarta-feira:</strong>
+                são dias exclusivos. Neles, sabores sem meta especial ficam com meta 0.
+            </p>
+        </div>
+
+        <form method="POST">
+
+            <h2>Metas por Cenário</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sabor</th>
+                        <th>Classe</th>
+                        <th>Chuva</th>
+                        <th>Normal</th>
+                        <th>Verão</th>
+                        <th>Baixa</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for sabor in sabores %}
+                    <tr>
+                        <td>
+                            <input
+                                type="text"
+                                name="nome_{{ sabor.id }}"
+                                value="{{ sabor.nome }}"
+                                class="input-nome-meta"
+                            >
+                        </td>
+
+                        <td>
+                            <select name="classe_{{ sabor.id }}">
+                                <option value="Ouro" {% if sabor.classe == "Ouro" %}selected{% endif %}>Ouro</option>
+                                <option value="Prata" {% if sabor.classe == "Prata" %}selected{% endif %}>Prata</option>
+                                <option value="Bronze" {% if sabor.classe == "Bronze" %}selected{% endif %}>Bronze</option>
+                            </select>
+                        </td>
+
+                        <td>
+                            <input type="number" name="chuva_{{ sabor.id }}" value="{{ sabor.metas['Chuva'] }}" min="0">
+                        </td>
+
+                        <td>
+                            <input type="number" name="normal_{{ sabor.id }}" value="{{ sabor.metas['Normal'] }}" min="0">
+                        </td>
+
+                        <td>
+                            <input type="number" name="verao_{{ sabor.id }}" value="{{ sabor.metas['Verão'] }}" min="0">
+                        </td>
+
+                        <td>
+                            <input type="number" name="baixa_{{ sabor.id }}" value="{{ sabor.metas['Baixa'] }}" min="0">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <h2>Metas Especiais por Dia</h2>
+
+            <p class="texto-ajuda">
+                Deixe vazio para usar a meta do cenário.
+                Em Segunda-feira e Quarta-feira, vazio significa meta 0.
+            </p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sabor</th>
+                        {% for dia in dias_semana %}
+                        <th>
+                            {{ dia }}
+                            {% if dia in dias_exclusivos %}
+                            <br><small>Exclusivo</small>
+                            {% endif %}
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for sabor in sabores %}
+                    <tr>
+                        <td class="nome-sabor">{{ sabor.nome }}</td>
+
+                        {% for dia in dias_semana %}
+                        <td>
+                            <input
+                                type="number"
+                                name="dia_{{ dia }}_{{ sabor.id }}"
+                                min="0"
+                                value="{{ metas_por_dia.get(dia, {}).get(sabor.nome, '') }}"
+                                placeholder="-"
+                            >
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="botoes-metas">
+                <button type="submit" class="btn-salvar-metas">
+                    Salvar Metas
+                </button>
+
+                <a href="/producao" class="btn-link-avulsas">
+                    Voltar
+                </a>
+            </div>
+
+        </form>
+
+    </div>
+
+</body>
+</html>

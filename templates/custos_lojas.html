@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Custos por Loja - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean container-wide">
+    {% include '_menu.html' %}
+
+    <section class="dashboard-resumo">
+        <div>
+            <span class="eyebrow">Custos gerenciais</span>
+            <h1>Custos por Loja</h1>
+            <p>Os custos abaixo ficam congelados quando o romaneio registra a saída.</p>
+        </div>
+    </section>
+
+    <form method="GET" class="card-usuario filtros-custos filtros-custos-loja">
+        <div class="campo-form"><label>Data inicial</label><input type="date" name="data_inicio" value="{{ data_inicio }}"></div>
+        <div class="campo-form"><label>Data final</label><input type="date" name="data_fim" value="{{ data_fim }}"></div>
+        <div class="campo-form"><label>Loja</label><select name="loja_id"><option value="">Todas</option>{% for loja in lojas %}<option value="{{ loja.id }}" {% if loja_id == loja.id|string %}selected{% endif %}>{{ loja.nome }}</option>{% endfor %}</select></div>
+        <div class="campo-form"><label>Categoria</label><select name="categoria_id"><option value="">Todas</option>{% for categoria in categorias %}<option value="{{ categoria.id }}" {% if categoria_id == categoria.id|string %}selected{% endif %}>{{ categoria.nome }}</option>{% endfor %}</select></div>
+        <div class="campo-form campo-produto-filtro"><label>Produto</label><select name="produto_id"><option value="">Todos</option>{% for produto in produtos %}<option value="{{ produto.id }}" {% if produto_id == produto.id|string %}selected{% endif %}>{{ produto.codigo }} - {{ produto.nome }}</option>{% endfor %}</select></div>
+        <div class="botoes-inline"><button class="btn-salvar-producao">Filtrar</button><a href="/custos/lojas" class="btn-link-avulsas">Limpar</a></div>
+    </form>
+
+    <div class="custos-kpis">
+        <article class="kpi-custo"><span>Total do período</span><strong>R$ {{ '%.2f'|format(relatorio.total_geral) }}</strong><small>{{ relatorio.total_romaneios }} romaneio(s)</small></article>
+        <article class="kpi-custo"><span>Lojas com movimentação</span><strong>{{ relatorio.lojas|length }}</strong><small>Unidades atendidas no filtro</small></article>
+        <article class="kpi-custo"><span>Produtos diferentes</span><strong>{{ relatorio.produtos|length }}</strong><small>Produtos com custo registrado</small></article>
+    </div>
+
+    <div class="relatorios-duas-colunas">
+        <section class="card-usuario">
+            <h2>Resumo por loja</h2>
+            {% if relatorio.lojas %}
+            <table><thead><tr><th>Loja</th><th>Romaneios</th><th>Itens</th><th>Total</th></tr></thead><tbody>
+            {% for item in relatorio.lojas %}<tr><td class="nome-sabor">{{ item.nome }}</td><td>{{ item.romaneios }}</td><td>{{ item.itens }}</td><td class="valor-custo">R$ {{ '%.2f'|format(item.total) }}</td></tr>{% endfor %}
+            </tbody></table>
+            {% else %}<div class="mensagem-aviso">Nenhuma saída com custo encontrada.</div>{% endif %}
+        </section>
+
+        <section class="card-usuario">
+            <h2>Resumo por categoria</h2>
+            {% if relatorio.categorias %}
+            <table><thead><tr><th>Categoria</th><th>Itens</th><th>Total</th></tr></thead><tbody>
+            {% for item in relatorio.categorias %}<tr><td class="nome-sabor">{{ item.nome }}</td><td>{{ item.itens }}</td><td class="valor-custo">R$ {{ '%.2f'|format(item.total) }}</td></tr>{% endfor %}
+            </tbody></table>
+            {% else %}<div class="mensagem-aviso">Sem categorias no período.</div>{% endif %}
+        </section>
+    </div>
+
+    <section class="card-usuario">
+        <h2>Produtos enviados</h2>
+        {% if relatorio.produtos %}
+        <table><thead><tr><th>Código</th><th>Produto</th><th>Quantidade</th><th>Unidade</th><th>Custo total</th></tr></thead><tbody>
+        {% for item in relatorio.produtos %}<tr><td>{{ item.codigo }}</td><td class="nome-sabor">{{ item.nome }}</td><td>{{ '%.4f'|format(item.quantidade) }}</td><td>{{ item.unidade }}</td><td class="valor-custo">R$ {{ '%.2f'|format(item.total) }}</td></tr>{% endfor %}
+        </tbody></table>
+        {% else %}<div class="mensagem-aviso">Nenhum produto no filtro.</div>{% endif %}
+    </section>
+
+    <section class="card-usuario">
+        <div class="titulo-com-acoes"><div><h2>Detalhamento das saídas</h2><p>Cada linha representa o custo congelado de um produto expedido.</p></div><button class="btn-imprimir" onclick="window.print()">Imprimir</button></div>
+        {% if relatorio.detalhes %}
+        <div class="tabela-scroll"><table><thead><tr><th>Data</th><th>Romaneio</th><th>Loja</th><th>Produto</th><th>Categoria</th><th>Quantidade</th><th>Custo unit.</th><th>Total</th><th>Origem</th></tr></thead><tbody>
+        {% for item in relatorio.detalhes %}<tr><td>{{ item.data_saida }}</td><td>{{ item.romaneio_codigo }}</td><td>{{ item.loja_nome }}</td><td class="nome-sabor">{{ item.produto_codigo }} - {{ item.produto_nome }}</td><td>{{ item.categoria_nome or 'Sem categoria' }}</td><td>{{ '%.4f'|format(item.quantidade_base) }} {{ item.unidade }}</td><td>R$ {{ '%.4f'|format(item.custo_unitario_snapshot) }}</td><td class="valor-custo">R$ {{ '%.2f'|format(item.custo_total_snapshot) }}</td><td>{{ item.origem_custo }}</td></tr>{% endfor %}
+        </tbody></table></div>
+        {% else %}<div class="mensagem-aviso">Nenhum custo de loja registrado para o filtro selecionado.</div>{% endif %}
+    </section>
+
+    <div class="botoes-metas"><a href="/custos" class="btn-link-avulsas">Voltar aos custos</a></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,130 @@
+{% set rota_atual = request.path %}
+<button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Abrir menu" aria-controls="appSidebar" aria-expanded="false">
+    <span></span><span></span><span></span>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<aside class="app-sidebar" id="appSidebar">
+    <a href="{% if session.perfil == 'loja' %}/loja{% else %}/dashboard{% endif %}" class="sidebar-brand" aria-label="FoodOps Demo">
+        <img src="{{ url_for('static', filename='img/logo_sistema.png') }}" alt="FoodOps Demo">
+        <span class="sidebar-brand-text">
+            <strong>FoodOps Demo</strong>
+            <small>Gestão operacional</small>
+        </span>
+    </a>
+
+    <div class="sidebar-section-label">Navegação</div>
+
+    {% if session.perfil == "loja" %}
+    <nav class="sidebar-nav" aria-label="Menu da loja">
+        <a href="/loja" class="sidebar-link {% if rota_atual == '/loja' %}active{% endif %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5M5 10.5V20h14v-9.5M9 20v-6h6v6"/></svg>
+            <span>Início</span>
+        </a>
+        <a href="/loja/pedidos/novo" class="sidebar-link {% if rota_atual == '/loja/pedidos/novo' %}active{% endif %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Novo pedido</span>
+        </a>
+        <a href="/loja/pedidos" class="sidebar-link {% if rota_atual.startswith('/loja/pedidos') and rota_atual != '/loja/pedidos/novo' %}active{% endif %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16H6zM9 8h6M9 12h6M9 16h4"/></svg>
+            <span>Meus pedidos</span>
+        </a>
+    </nav>
+    {% else %}
+    <nav class="sidebar-nav" aria-label="Menu principal">
+        <a href="/dashboard" class="sidebar-link {% if rota_atual == '/dashboard' %}active{% endif %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>
+            <span>Início</span>
+        </a>
+
+        {% if session.perfil in ["admin", "producao", "estoque"] %}
+        <a href="/producao" class="sidebar-link {% if rota_atual.startswith('/producao') or rota_atual.startswith('/planejamento') or rota_atual.startswith('/ficha') or rota_atual.startswith('/consumos') or rota_atual.startswith('/analises') %}active{% endif %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V9l5 3V8l5 3V5h6v15zM8 16h2M14 16h2"/></svg>
+            <span>Produção</span>
+        </a>
+        {% endif %}
+
+        {% if session.perfil in ["admin", "estoque", "compras"] %}
+        <a href="/estoque" class="sidebar-link {% if rota_atual.startswith('/estoque') or rota_atual.startswith('/validade') or rota_atual.startswith('/rastreabilidade') or rota_atual.startswith('/perdas') %}active{% endif %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 7 8-4 8 4-8 4zM4 7v10l8 4 8-4V7M12 11v10"/></svg>
+            <span>Estoque</span>
+        </a>
+        {% endif %}
+
+        {% if session.perfil in ["admin", "compras", "estoque"] %}
+        <a href="/compras" class="sidebar-link {% if rota_atual.startswith('/compras') %}active{% endif %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16l-1.5 12h-13zM8 7V5a4 4 0 0 1 8 0v2"/></svg>
+            <span>Compras</span>
+        </a>
+        {% endif %}
+
+        {% if session.perfil != "loja" %}
+        <a href="/solicitacoes-internas" class="sidebar-link {% if rota_atual.startswith('/solicitacoes-internas') or rota_atual.startswith('/centros-custo') %}active{% endif %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v4H7zM5 7h14v14H5zM8 11h8M8 15h5"/></svg>
+            <span>Solicitações</span>
+        </a>
+        {% endif %}
+
+        {% if session.perfil in ["admin", "estoque"] %}
+        <a href="/expedicao" class="sidebar-link {% if rota_atual.startswith('/expedicao') or rota_atual.startswith('/romaneio') or rota_atual.startswith('/pedidos-lojas') %}active{% endif %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v10H3zM14 10h4l3 3v3h-7zM7 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM18 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg>
+            <span>Expedição</span>
+        </a>
+        {% endif %}
+
+        {% if session.perfil == "admin" %}
+        <div class="sidebar-section-label sidebar-section-spaced">Gestão</div>
+        <a href="/indicadores" class="sidebar-link {% if rota_atual.startswith('/indicadores') %}active{% endif %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+            <span>Indicadores</span>
+        </a>
+        <a href="/custos" class="sidebar-link {% if rota_atual.startswith('/custos') %}active{% endif %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M16 7.5c0-2-1.8-3-4-3s-4 1-4 3 1.8 3 4 3 4 1 4 3-1.8 3-4 3-4-1-4-3"/></svg>
+            <span>Custos</span>
+        </a>
+        <a href="/usuarios" class="sidebar-link {% if rota_atual.startswith('/usuarios') or rota_atual.startswith('/metas') or rota_atual.startswith('/lojas') or rota_atual.startswith('/backup') %}active{% endif %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0M19 8v4M17 10h4"/></svg>
+            <span>Administração</span>
+        </a>
+        {% endif %}
+    </nav>
+    {% endif %}
+
+    <div class="sidebar-footer">
+        <div class="sidebar-user">
+            <span class="sidebar-avatar">{{ (session.usuario or 'U')[0]|upper }}</span>
+            <span class="sidebar-user-copy">
+                <strong>{{ session.usuario }}</strong>
+                <small>{{ 'Loja' if session.perfil == 'loja' else session.perfil|capitalize }}</small>
+            </span>
+        </div>
+        <a href="/logout" class="sidebar-logout" title="Sair do sistema">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5M14 8l4 4-4 4M18 12H9"/></svg>
+            <span>Sair</span>
+        </a>
+    </div>
+</aside>
+
+<script>
+(function () {
+    const toggle = document.getElementById('mobileMenuToggle');
+    const sidebar = document.getElementById('appSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (!toggle || !sidebar || !overlay) return;
+
+    function closeMenu() {
+        document.body.classList.remove('sidebar-open');
+        toggle.setAttribute('aria-expanded', 'false');
+    }
+
+    toggle.addEventListener('click', function () {
+        const open = document.body.classList.toggle('sidebar-open');
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    overlay.addEventListener('click', closeMenu);
+    sidebar.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
+    window.addEventListener('keydown', event => {
+        if (event.key === 'Escape') closeMenu();
+    });
+})();
+</script>

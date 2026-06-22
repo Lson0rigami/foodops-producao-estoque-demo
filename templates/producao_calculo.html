@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Calcular Produção - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container">
+    {% include '_menu.html' %}
+    <div class="modulo-titulo">
+        <span class="eyebrow">Produção • Demanda consolidada</span>
+        <h1>Calcular Produção</h1>
+        <p>Selecione uma rodada fechada e informe somente os tabuleiros existentes na câmara.</p>
+    </div>
+
+    {% if mensagem_sucesso %}<div class="mensagem-sucesso">{{ mensagem_sucesso }}
+        {% if planejamento_id %}<a href="/planejamentos-producao/{{ planejamento_id }}" class="btn-link-metas">Abrir planejamento</a>{% endif %}
+    </div>{% endif %}
+    {% if mensagem_erro %}<div class="mensagem-erro">{{ mensagem_erro }}</div>{% endif %}
+    {% if not rodada %}<div class="mensagem-aviso">Ainda não existe uma rodada fechada. Feche os pedidos das lojas antes de calcular a produção.</div>{% endif %}
+
+    <form method="POST">
+        <div class="card-usuario bloco-rodada-producao">
+            <div class="form-confirmar-compra">
+                <div class="campo-form">
+                    <label>Pedidos fechados para entrega</label>
+                    <select name="rodada_id" onchange="window.location='{{ url_for('producao_calcular') }}?rodada_id='+this.value" required>
+                        <option value="">Selecione</option>
+                        {% for r in rodadas %}
+                        {% if r.status in ['Fechada','Planejada'] %}
+                        <option value="{{ r.id }}" {% if rodada_id|string == r.id|string %}selected{% endif %}>#{{ r.id }} • {{ r.data_entrega }} • {{ r.status }}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if rodada %}
+                <div class="campo-form"><label>Cenário</label><input value="{{ rodada.cenario }}" disabled><input type="hidden" name="cenario" value="{{ rodada.cenario }}"></div>
+                <div class="campo-form"><label>Dia da semana</label><input value="{{ rodada.dia_semana }}" disabled><input type="hidden" name="dia_semana" value="{{ rodada.dia_semana }}"></div>
+                <div class="campo-form"><label>Entrega</label><input value="{{ rodada.data_entrega }}" disabled></div>
+                {% endif %}
+            </div>
+            {% if rodada %}
+            <div class="grupo-acoes grupo-acoes-limpo">
+                <button type="submit" formaction="/producao/calcular">Calcular Produção</button>
+                {% if resultado %}
+                <button type="submit" formaction="/salvar-producao" class="btn-salvar-producao">Salvar no Histórico</button>
+                <button type="submit" formaction="/planejamento-producao/gerar" class="btn-planejamento">Gerar Planejamento</button>
+                <button type="submit" formaction="/etiquetas" class="btn-etiquetas">Gerar Etiquetas</button>
+                {% endif %}
+                <a href="/pedidos-lojas/fechamentos/{{ rodada.id }}" class="btn-link-metas">Ver demanda</a>
+                <a href="/producao" class="btn-link-avulsas">Voltar</a>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if rodada %}
+        <div class="table-responsive">
+        <table>
+            <thead><tr><th>Sabor</th><th>Classe</th><th>Início da câmara<br><small>tabuleiros</small></th><th>Pedidos normais</th><th>Mistos</th><th>Meta segurança</th></tr></thead>
+            <tbody>
+            {% for sabor in sabores %}
+            {% set v = valores_digitados.get(loop.index0, {}) %}
+            <tr>
+                <td class="nome-sabor">{{ sabor.nome }}</td>
+                <td class="classe {{ sabor.classe|lower }}">{{ sabor.classe }}</td>
+                <td><input type="number" name="inicio_{{ loop.index0 }}" min="0" value="{{ v.get('inicio', 0) }}"></td>
+                <td>{{ '%.0f'|format(v.get('pedido_unidades', 0)) }} un<br><small>{{ '%.2f'|format(v.get('pedido', 0)) }} tab.</small></td>
+                <td>{{ '%.0f'|format(v.get('misto_unidades', 0)) }} un</td>
+                <td>{% if resultado %}{{ resultado[loop.index0].meta }} tab.{% else %}calculada pelo cenário{% endif %}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% endif %}
+    </form>
+
+    {% if resultado %}
+    <div class="resultado">
+        <h2>Ordem de Produção</h2>
+        <div class="info-resumo">
+            <p><strong>Rodada:</strong> #{{ rodada.id }}</p><p><strong>Entrega:</strong> {{ rodada.data_entrega }}</p>
+            <p><strong>Cenário:</strong> {{ cenario }}</p><p><strong>Dia:</strong> {{ dia_semana }}</p>
+        </div>
+        <div class="table-responsive"><table>
+            <thead><tr><th>Sabor</th><th>Início</th><th>Pedido normal</th><th>Demanda misto</th><th>Meta</th><th>Produzir normal</th><th>Total em unidades</th><th>Final câmara</th></tr></thead>
+            <tbody>{% for item in resultado %}
+            <tr>
+                <td class="nome-sabor">{{ item.nome }}</td><td>{{ item.inicio }} tab.</td>
+                <td>{{ '%.0f'|format(item.pedido_unidades) }} un</td><td>{{ '%.0f'|format(item.misto_unidades) }} un</td>
+                <td>{{ item.meta }} tab.</td><td class="producao">{{ item.producao }} tab.</td>
+                <td>{{ '%.0f'|format(item.empadas) }} un</td><td>{{ '%.2f'|format(item.estoque_final) }} tab.</td>
+            </tr>{% endfor %}</tbody>
+        </table></div>
+        {% if mistos %}
+        <div class="card-usuario"><h2>Tabuleiros mistos — sempre produzir</h2>
+            <table><thead><tr><th>Loja</th><th>Combinação</th><th>Quantidade</th></tr></thead><tbody>
+            {% for m in mistos %}<tr><td>{{ m.loja_nome }}</td><td>{{ m.sabor_1_nome }} (18) + {{ m.sabor_2_nome }} (17)</td><td>{{ m.quantidade_tabuleiros }} misto(s)</td></tr>{% endfor %}
+            </tbody></table>
+        </div>{% endif %}
+        <div class="totais"><p><strong>Total físico:</strong> {{ total_producao }} tabuleiro(s)</p><p><strong>Total produzido:</strong> {{ '%.0f'|format(total_empadas) }} unidades</p></div>
+        <button onclick="window.print()" class="btn-imprimir">Imprimir Ordem de Produção</button>
+    </div>
+    {% endif %}
+</div>
+</body>
+</html>

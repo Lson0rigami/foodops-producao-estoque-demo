@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Movimentação de Estoque</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container">
+        {% include '_menu.html' %}
+        <h1>Movimentação de Estoque</h1>
+
+        {% if mensagem_sucesso %}<div class="mensagem-sucesso">{{ mensagem_sucesso }}</div>{% endif %}
+        {% if mensagem_erro %}<div class="mensagem-erro">{{ mensagem_erro }}</div>{% endif %}
+
+        <div class="info-resumo">
+            <p>
+                <strong>Regra:</strong>
+                informe a quantidade na embalagem escolhida. O sistema converte automaticamente para a unidade base do saldo.
+            </p>
+        </div>
+
+        <div class="card-usuario">
+            <h2>Registrar Entrada ou Saída</h2>
+
+            <form method="POST" class="form-confirmar-compra">
+                <div class="campo-form campo-filtro-largo">
+                    <label>Produto oficial</label>
+                    <select name="produto_id" id="produto_id" required onchange="atualizarEmbalagens(); atualizarPreviaConversao();">
+                        <option value="">Selecione</option>
+                        {% for produto in produtos %}
+                        <option value="{{ produto.id }}" data-unidade="{{ produto.unidade_padrao }}" {% if produto_id_selecionado|string == produto.id|string %}selected{% endif %}>
+                            {{ produto.codigo or ('%04d' % produto.id) }} - {{ produto.nome }} (saldo em {{ produto.unidade_padrao }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="campo-form">
+                    <label>Tipo</label>
+                    <select name="tipo" id="tipo_movimentacao" onchange="mostrarAutorizacaoNegativo()">
+                        {% for tipo in tipos %}
+                        <option value="{{ tipo }}">{{ tipo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="campo-form">
+                    <label>Embalagem / conversão</label>
+                    <select name="embalagem_id" id="embalagem_id" onchange="atualizarPreviaConversao()">
+                        <option value="">Unidade base do produto</option>
+                    </select>
+                    <small id="texto_conversao_embalagem">Escolha um produto para ver as conversões disponíveis.</small>
+                </div>
+
+                <div class="campo-form">
+                    <label>Quantidade informada</label>
+                    <input type="number" step="0.01" min="0.01" name="quantidade" id="quantidade" required oninput="atualizarPreviaConversao()">
+                </div>
+
+                <div class="campo-form">
+                    <label>Data</label>
+                    <input type="date" name="data_movimentacao" value="{{ data_hoje }}" required>
+                </div>
+
+                <div class="campo-form">
+                    <label>Origem</label>
+                    <select name="origem">
+                        {% for origem in origens %}
+                        <option value="{{ origem }}">{{ origem }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="campo-form campo-observacao-compra">
+                    <label>Observação</label>
+                    <input type="text" name="observacao" placeholder="Opcional">
+                </div>
+
+                <div class="previsao-conversao" id="previsao_conversao">
+                    <strong>Prévia:</strong> selecione um produto, uma embalagem e informe a quantidade.
+                </div>
+
+                {% if session.perfil == "admin" %}
+                <div class="campo-form campo-observacao-compra aviso-negativo" id="bloco_saldo_negativo">
+                    <label>
+                        <input type="checkbox" name="permitir_saldo_negativo" value="sim" class="checkbox-inline">
+                        Autorizar saída mesmo com saldo insuficiente
+                    </label>
+
+                    <input
+                        type="text"
+                        name="justificativa_saldo_negativo"
+                        placeholder="Justificativa obrigatória se o saldo ficar negativo"
+                    >
+
+                    <small>
+                        Use apenas quando o estoque físico saiu antes da entrada ser lançada, ou em ajuste autorizado.
+                    </small>
+                </div>
+                {% endif %}
+
+                <button type="submit" class="btn-salvar-producao">Registrar Movimentação</button>
+            </form>
+        </div>
+
+        <div class="botoes-metas">
+            <a href="/estoque" class="btn-link-avulsas">Voltar</a>
+            <a href="/estoque/historico" class="btn-link-metas">Histórico</a>
+            <a href="/estoque/saldo" class="btn-link-metas">Saldo Atual</a>
+        </div>
+    </div>
+
+    <script>
+        function mostrarAutorizacaoNegativo() {
+            const tipo = document.getElementById("tipo_movimentacao").value;
+            const bloco = document.getElementById("bloco_saldo_negativo");
+
+            if (!bloco) return;
+
+            if (tipo === "Saída") {
+                bloco.style.display = "block";
+            } else {
+                bloco.style.display = "none";
+            }
+        }
+
+        const embalagensPorProduto = {{ embalagens_por_produto|tojson }};
+
+        function obterUnidadeProduto() {
+            const produtoSelect = document.getElementById("produto_id");
+            const option = produtoSelect.options[produtoSelect.selectedIndex];
+            return option ? (option.getAttribute("data-unidade") || "") : "";
+        }
+
+        function atualizarEmbalagens() {
+            const produtoSelect = document.getElementById("produto_id");
+            const embalagemSelect = document.getElementById("embalagem_id");
+            const textoConversao = document.getElementById("texto_conversao_embalagem");
+
+            if (!produtoSelect || !embalagemSelect) return;
+
+            const produtoId = produtoSelect.value;
+            const unidade = obterUnidadeProduto();
+            const embalagens = embalagensPorProduto[produtoId] || [];
+
+            embalagemSelect.innerHTML = '<option value="" data-fator="1" data-nome="Unidade base">Unidade base do produto</option>';
+
+            embalagens.forEach(function(embalagem) {
+                const option = document.createElement("option");
+                option.value = embalagem.id;
+                option.setAttribute("data-fator", embalagem.fator_conversao);
+                option.setAttribute("data-nome", embalagem.nome);
+                option.textContent = embalagem.nome + " × " + embalagem.fator_conversao + " " + unidade;
+                embalagemSelect.appendChild(option);
+            });
+
+            if (produtoId) {
+                textoConversao.textContent = "O saldo será lançado em " + unidade + ". Escolha uma embalagem para converter automaticamente.";
+            } else {
+                textoConversao.textContent = "Escolha um produto para ver as conversões disponíveis.";
+            }
+        }
+
+        function atualizarPreviaConversao() {
+            const produtoSelect = document.getElementById("produto_id");
+            const embalagemSelect = document.getElementById("embalagem_id");
+            const quantidadeInput = document.getElementById("quantidade");
+            const previa = document.getElementById("previsao_conversao");
+
+            const produtoTexto = produtoSelect.options[produtoSelect.selectedIndex] ? produtoSelect.options[produtoSelect.selectedIndex].textContent.trim() : "";
+            const unidade = obterUnidadeProduto();
+            const quantidade = parseFloat((quantidadeInput.value || "0").replace(",", "."));
+            const embalagemOption = embalagemSelect.options[embalagemSelect.selectedIndex];
+            const fator = embalagemOption ? parseFloat(embalagemOption.getAttribute("data-fator") || "1") : 1;
+            const nomeEmbalagem = embalagemOption ? (embalagemOption.getAttribute("data-nome") || "Unidade base") : "Unidade base";
+
+            if (!produtoSelect.value || !quantidade || quantidade <= 0) {
+                previa.innerHTML = "<strong>Prévia:</strong> selecione um produto, uma embalagem e informe a quantidade.";
+                return;
+            }
+
+            const total = quantidade * fator;
+            previa.innerHTML = "<strong>Prévia:</strong> " + quantidade + " × " + nomeEmbalagem + " = <strong>" + total.toFixed(2) + " " + unidade + "</strong> lançados no saldo de " + produtoTexto + ".";
+        }
+
+        mostrarAutorizacaoNegativo();
+        atualizarEmbalagens();
+        atualizarPreviaConversao();
+    </script>
+</body>
+</html>

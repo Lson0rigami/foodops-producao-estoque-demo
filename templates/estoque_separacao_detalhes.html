@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Separação #{{ separacao.id }} - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container container-clean">
+        {% include '_menu.html' %}
+
+        <section class="dashboard-resumo modulo-hero-clean">
+            <div>
+                <span class="eyebrow">Estoque • Separação #{{ separacao.id }}</span>
+                <h1>Conferência da Separação</h1>
+                <p>Planejamento #{{ separacao.planejamento_id }} • registre as quantidades realmente separadas.</p>
+            </div>
+        </section>
+
+        {% if request.args.get('mensagem') %}<div class="mensagem-sucesso">{{ request.args.get('mensagem') }}</div>{% endif %}
+        {% if request.args.get('erro') %}<div class="mensagem-erro">{{ request.args.get('erro') }}</div>{% endif %}
+
+        <div class="painel-produto-detalhes planejamento-resumo-grid">
+            <div class="card-detalhe-produto"><span>Status</span><strong>{{ separacao.status }}</strong></div>
+            <div class="card-detalhe-produto"><span>Planejamento</span><strong>#{{ separacao.planejamento_id }}</strong></div>
+            <div class="card-detalhe-produto"><span>Cenário</span><strong>{{ separacao.cenario }}</strong></div>
+            <div class="card-detalhe-produto"><span>Dia</span><strong>{{ separacao.dia_semana }}</strong></div>
+            <div class="card-detalhe-produto"><span>Total previsto</span><strong>{{ "%.0f"|format(separacao.total_unidades or 0) }} un</strong></div>
+        </div>
+
+        <div class="info-resumo">
+            <p><strong>Criada:</strong> {{ separacao.data_criacao }}</p>
+            <p><strong>Por:</strong> {{ separacao.criado_por }}</p>
+            {% if separacao.data_atualizacao %}<p><strong>Atualizada:</strong> {{ separacao.data_atualizacao }}</p>{% endif %}
+            {% if separacao.atualizado_por %}<p><strong>Responsável:</strong> {{ separacao.atualizado_por }}</p>{% endif %}
+        </div>
+
+        {% if separacao.planejamento_status == 'Com alertas' %}
+        <div class="mensagem-aviso">O planejamento possui alertas técnicos. Confira as fichas e quantidades antes de considerar a separação concluída.</div>
+        {% endif %}
+
+        <div class="painel-acoes-ficha">
+            <a href="/planejamentos-producao/{{ separacao.planejamento_id }}" class="btn-link-metas">Abrir planejamento</a>
+            <button type="button" onclick="window.print()" class="btn-imprimir">Imprimir lista</button>
+            {% if separacao.status not in ['Cancelado', 'Encerrado'] %}
+            <a href="/estoque/separacoes/{{ separacao.id }}/transferir" class="btn-link-metas">Enviar para célula</a>
+            {% endif %}
+            <a href="/estoque/separacoes" class="btn-link-avulsas">Voltar</a>
+        </div>
+
+        <form method="POST" action="/estoque/separacoes/{{ separacao.id }}/salvar" class="form-separacao-print">
+            <section class="card-usuario planejamento-secao lista-separacao-print">
+                <div class="secao-cabecalho-planejamento">
+                    <div>
+                        <span class="eyebrow">Almoxarifado</span>
+                        <h2>Itens para separar</h2>
+                        <p>O saldo mostrado é consultivo. Salvar esta tela não gera saída de estoque.</p>
+                    </div>
+                </div>
+
+                {% if itens %}
+                <div class="tabela-responsiva">
+                    <table class="tabela-separacao">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Categoria</th>
+                                <th>Previsto</th>
+                                <th>Saldo atual</th>
+                                <th>Separado</th>
+                                <th>Falta</th>
+                                <th>Status</th>
+                                <th>Observação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in itens %}
+                            <tr>
+                                <td class="nome-sabor">{{ item.produto_codigo }} - {{ item.produto_nome }}</td>
+                                <td>{{ item.categoria_nome or '-' }}</td>
+                                <td>{{ "%.4f"|format(item.quantidade_prevista or 0) }} {{ item.unidade }}</td>
+                                <td>
+                                    <span class="{% if item.disponibilidade == 'Disponível' %}saldo-disponivel{% else %}saldo-insuficiente{% endif %}">
+                                        {{ "%.4f"|format(item.saldo_atual or 0) }} {{ item.unidade }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <input class="input-separacao" type="number" step="0.0001" min="0"
+                                           name="quantidade_separada_{{ item.id }}"
+                                           value="{{ '%.4f'|format(item.quantidade_separada or 0) }}"
+                                           {% if separacao.status in ['Cancelado', 'Encerrado'] %}disabled{% endif %}>
+                                    <small>{{ item.unidade }}</small>
+                                </td>
+                                <td>{{ "%.4f"|format(item.quantidade_faltante or 0) }} {{ item.unidade }}</td>
+                                <td>
+                                    {% if item.status == 'Separado' %}
+                                        <span class="badge-status status-ok">Separado</span>
+                                    {% else %}
+                                        <span class="badge-status status-aviso">{{ item.status }}</span>
+                                    {% endif %}
+                                    {% if item.alerta %}<div class="texto-fraco texto-alerta-separacao">{{ item.alerta }}</div>{% endif %}
+                                    {% if item.quantidade_transferida is defined %}
+                                    <div class="texto-fraco texto-transferencia-item">Transferido: {{ "%.4f"|format(item.quantidade_transferida or 0) }} {{ item.unidade }} • falta enviar: {{ "%.4f"|format(item.quantidade_a_transferir or 0) }} {{ item.unidade }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <input class="input-observacao-separacao" type="text"
+                                           name="observacao_{{ item.id }}"
+                                           value="{{ item.observacao or '' }}"
+                                           placeholder="Ex.: faltou, substituição, conferido"
+                                           {% if separacao.status in ['Cancelado', 'Encerrado'] %}disabled{% endif %}>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="mensagem-aviso">Esta separação não possui insumos básicos calculados.</div>
+                {% endif %}
+            </section>
+
+            <div class="card-usuario campo-observacao-geral">
+                <label for="observacao_geral">Observação geral da separação</label>
+                <textarea name="observacao_geral" id="observacao_geral" rows="3"
+                          {% if separacao.status in ['Cancelado', 'Encerrado'] %}disabled{% endif %}>{{ separacao.observacao or '' }}</textarea>
+            </div>
+
+            {% if separacao.status not in ['Cancelado', 'Encerrado'] %}
+            <div class="botoes-metas no-print">
+                <button type="submit" class="btn-salvar-producao">Salvar conferência</button>
+                <span class="texto-fraco">Quando todos os itens atingirem o previsto, o status muda automaticamente para Separado.</span>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</body>
+</html>

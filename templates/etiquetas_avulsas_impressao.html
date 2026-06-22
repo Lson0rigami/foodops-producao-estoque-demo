@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Impressão de Etiquetas Avulsas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='etiquetas.css') }}">
+</head>
+<body>
+
+    <div class="barra">
+        <h1>Etiquetas Avulsas</h1>
+
+        <p>
+            <strong>Tipo:</strong>
+            {% if tipo_etiqueta == "tabuleiro" %}
+                Tabuleiro normal
+            {% else %}
+                Tabuleiro misto
+            {% endif %}
+            |
+            <strong>Total:</strong> {{ quantidade }} etiquetas
+        </p>
+
+        <button onclick="window.print()">Imprimir Etiquetas</button>
+        <a href="/etiquetas-avulsas">Voltar</a>
+    </div>
+
+    <div class="folha-etiquetas">
+
+        {% for etiqueta in etiquetas %}
+        <div class="etiqueta">
+
+            <div class="empresa">EMPADAS BARNABÉ</div>
+
+            {% if etiqueta.tipo == "tabuleiro" %}
+
+                <div class="sabor">{{ etiqueta.sabor }}</div>
+
+                <div class="linha">
+                    <span>Data:</span>
+                    <strong>{{ etiqueta.data }}</strong>
+                </div>
+
+                <div class="linha">
+                    <span>Qtd:</span>
+                    <strong>{{ etiqueta.quantidade_empadas }} unidades</strong>
+                </div>
+
+                <div class="linha">
+                    <span>Etiqueta:</span>
+                    <strong>{{ etiqueta.numero }}/{{ etiqueta.total }}</strong>
+                </div>
+
+                <div class="lote">
+                    Lote: {{ etiqueta.lote }}
+                </div>
+
+            {% else %}
+
+                <div class="sabor misto-titulo">MISTO</div>
+
+                <div class="misto-linha">
+                    <strong>{{ etiqueta.sabor_1 }}</strong>
+                    <span>{{ etiqueta.qtd_1 }} un.</span>
+                </div>
+
+                <div class="misto-linha">
+                    <strong>{{ etiqueta.sabor_2 }}</strong>
+                    <span>{{ etiqueta.qtd_2 }} un.</span>
+                </div>
+
+                <div class="linha">
+                    <span>Data:</span>
+                    <strong>{{ etiqueta.data }}</strong>
+                </div>
+
+                <div class="linha">
+                    <span>Etiqueta:</span>
+                    <strong>{{ etiqueta.numero }}/{{ etiqueta.total }}</strong>
+                </div>
+
+                <div class="lote">
+                    Lote: {{ etiqueta.lote }}
+                </div>
+
+            {% endif %}
+
+        </div>
+        {% endfor %}
+
+    </div>
+
+</body>
+</html>

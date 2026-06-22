@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Etiquetas Avulsas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='etiquetas_avulsas.css') }}">
+</head>
+<body>
+
+    <div class="container">
+
+        <h1>Etiquetas Avulsas</h1>
+
+        <p class="descricao">
+            Use esta tela para reimprimir etiquetas, gerar etiquetas restantes ou criar etiquetas de tabuleiros mistos.
+        </p>
+
+        <form method="POST" action="/gerar-etiquetas-avulsas">
+
+            <div class="card">
+
+                <label>Tipo de etiqueta:</label>
+
+                <div class="opcoes">
+                    <label>
+                        <input type="radio" name="tipo_etiqueta" value="tabuleiro" checked onchange="mostrarCampos()">
+                        Tabuleiro normal
+                    </label>
+
+                    <label>
+                        <input type="radio" name="tipo_etiqueta" value="misto" onchange="mostrarCampos()">
+                        Tabuleiro misto
+                    </label>
+                </div>
+
+            </div>
+
+            <div class="card" id="campo-tabuleiro">
+
+                <h2>Tabuleiro normal</h2>
+
+                <label for="sabor_tabuleiro">Sabor:</label>
+                <select name="sabor_tabuleiro" id="sabor_tabuleiro">
+                    {% for sabor in sabores %}
+                    <option value="{{ sabor.nome }}">{{ sabor.nome }}</option>
+                    {% endfor %}
+                </select>
+
+            </div>
+
+            <div class="card escondido" id="campo-misto">
+
+                <h2>Tabuleiro misto</h2>
+
+                <div class="linha-campos">
+                    <div>
+                        <label for="sabor_1">Sabor 1 - 18 unidades:</label>
+                        <select name="sabor_1" id="sabor_1">
+                            {% for sabor in sabores %}
+                            <option value="{{ sabor.nome }}">{{ sabor.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="sabor_2">Sabor 2 - 17 unidades:</label>
+                        <select name="sabor_2" id="sabor_2">
+                            {% for sabor in sabores %}
+                            <option value="{{ sabor.nome }}">{{ sabor.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="card">
+
+                <label for="quantidade">Quantidade de etiquetas:</label>
+                <input type="number" name="quantidade" id="quantidade" min="1" value="1">
+
+            </div>
+
+            <div class="botoes">
+                <button type="submit">Gerar Etiquetas</button>
+                <a href="/producao">Voltar</a>
+            </div>
+
+        </form>
+
+    </div>
+
+    <script>
+        function mostrarCampos() {
+            const tipo = document.querySelector('input[name="tipo_etiqueta"]:checked').value;
+
+            const campoTabuleiro = document.getElementById("campo-tabuleiro");
+            const campoMisto = document.getElementById("campo-misto");
+
+            if (tipo === "tabuleiro") {
+                campoTabuleiro.classList.remove("escondido");
+                campoMisto.classList.add("escondido");
+            } else {
+                campoTabuleiro.classList.add("escondido");
+                campoMisto.classList.remove("escondido");
+            }
+        }
+    </script>
+
+</body>
+</html>

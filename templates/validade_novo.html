@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head><meta charset="UTF-8"><title>Novo Lote - FoodOps Demo</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+<body><div class="container container-clean">{% include '_menu.html' %}
+<section class="dashboard-resumo modulo-hero-clean"><div><span class="eyebrow">Cadastro manual</span><h1>Novo Lote de Validade</h1><p>Use para recheios, preparações e saldos que não nasceram da confirmação automática da produção.</p></div></section>
+{% if mensagem_erro %}<div class="mensagem-erro">{{ mensagem_erro }}</div>{% endif %}
+<div class="mensagem-aviso"><strong>Atenção:</strong> registrar um lote não deve duplicar o estoque. Marque “gerar entrada” somente quando a quantidade ainda não estiver no saldo atual.</div>
+<div class="mensagem-aviso"><strong>Localização:</strong> este campo é rastreabilidade. Alterar o local aqui não transfere saldo entre estoque central e célula; use o módulo de transferências para isso.</div>
+<div class="card-usuario"><form method="POST" class="form-produto-profissional">
+<div class="campo-form campo-observacao-compra"><label>Produto oficial</label><select name="produto_id" id="produto_lote" required><option value="">Selecione</option>{% for p in produtos %}<option value="{{ p.id }}" data-dias="{{ p.dias_validade or '' }}">{{ p.codigo }} - {{ p.nome }} ({{ p.unidade_padrao }})</option>{% endfor %}</select></div>
+<div class="campo-form"><label>Data de produção</label><input type="date" name="data_producao" id="data_producao" value="{{ hoje }}" required></div>
+<div class="campo-form"><label>Data de validade</label><input type="date" name="data_validade" id="data_validade"><small>Pode ser preenchida automaticamente pelos dias configurados no produto.</small></div>
+<div class="campo-form"><label>Quantidade na unidade base</label><input type="number" step="0.01" min="0.01" name="quantidade" required></div>
+<div class="campo-form"><label>Tipo de local</label><select name="local_tipo" id="local_tipo">{% for local in locais %}<option value="{{ local }}">{{ local }}</option>{% endfor %}</select></div>
+<div class="campo-form"><label>Célula (opcional)</label><select name="celula_id"><option value="">Nenhuma</option>{% for c in celulas %}<option value="{{ c.id }}">{{ c.nome }}</option>{% endfor %}</select></div>
+<div class="campo-form"><label>Descrição do local</label><input type="text" name="local_descricao" placeholder="Ex: Câmara 1, prateleira A"></div>
+<div class="campo-form campo-check-produto"><label>Saldo do estoque</label><label class="check-inline"><input type="checkbox" name="gerar_entrada_estoque" value="1"> Gerar também entrada no estoque</label></div>
+<div class="campo-form campo-observacao-compra"><label>Observação</label><input type="text" name="observacao" placeholder="Opcional"></div>
+<div class="botoes-metas"><button type="submit" class="btn-salvar-producao">Criar lote</button><a href="/validade" class="btn-link-avulsas">Cancelar</a></div>
+</form></div>
+</div>
+<script>
+function somarDias(data, dias){const d=new Date(data+'T12:00:00');d.setDate(d.getDate()+Number(dias));return d.toISOString().slice(0,10)}
+function sugerirValidade(){const p=document.getElementById('produto_lote');const data=document.getElementById('data_producao').value;const dias=p.options[p.selectedIndex]?.dataset.dias;if(data&&dias&&!document.getElementById('data_validade').value){document.getElementById('data_validade').value=somarDias(data,dias)}}
+document.getElementById('produto_lote').addEventListener('change',sugerirValidade);document.getElementById('data_producao').addEventListener('change',()=>{document.getElementById('data_validade').value='';sugerirValidade()});
+</script></body></html>

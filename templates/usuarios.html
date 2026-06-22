@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerenciar Usuários</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+
+    <div class="container">
+
+        {% include '_menu.html' %}
+
+        <h1>Gerenciar Usuários</h1>
+
+        {% if mensagem_sucesso %}
+        <div class="mensagem-sucesso">
+            {{ mensagem_sucesso }}
+        </div>
+        {% endif %}
+
+        {% if mensagem_erro %}
+        <div class="mensagem-erro">
+            {{ mensagem_erro }}
+        </div>
+        {% endif %}
+
+        <div class="painel-usuarios">
+
+            <div class="card-usuario">
+
+                <h2>Criar Novo Usuário</h2>
+
+                <form method="POST" action="/usuarios" class="form-usuario">
+
+                    <div class="campo-form">
+                        <label for="usuario">Usuário:</label>
+                        <input
+                            type="text"
+                            name="usuario"
+                            id="usuario"
+                            placeholder="Ex: producao2"
+                            required
+                        >
+                    </div>
+
+                    <div class="campo-form">
+                        <label for="senha">Senha:</label>
+                        <input
+                            type="password"
+                            name="senha"
+                            id="senha"
+                            placeholder="Digite uma senha"
+                            required
+                        >
+                    </div>
+
+                    <div class="campo-form">
+                        <label for="perfil">Perfil:</label>
+                        <select name="perfil" id="perfil">
+                            <option value="producao">Produção</option>
+                            <option value="estoque">Estoque</option>
+                            <option value="compras">Compras</option>
+                            <option value="loja">Loja</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+
+                    <div class="campo-form" id="campo-loja-usuario">
+                        <label for="loja_id">Loja vinculada</label>
+                        <select name="loja_id" id="loja_id">
+                            <option value="">Selecione</option>
+                            {% for loja in lojas %}<option value="{{ loja.id }}">{{ loja.nome }}{% if not loja.ativo %} (inativa){% endif %}</option>{% endfor %}
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-salvar-producao">
+                        Criar Usuário
+                    </button>
+
+                </form>
+
+            </div>
+
+            <div class="card-usuario">
+
+                <h2>Usuários Cadastrados</h2>
+
+                {% if usuarios %}
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Perfil</th>
+                            <th>Trocar Senha</th>
+                            <th>Excluir</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for usuario in usuarios %}
+                        <tr>
+                            <td class="nome-sabor">
+                                {{ usuario.usuario }}
+
+                                {% if usuario.usuario == session.usuario %}
+                                <span class="badge-dia">Você</span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if usuario.perfil == "admin" %}
+                                    <span class="badge-admin">Admin</span>
+                                {% elif usuario.perfil == "compras" %}
+                                    <span class="badge-compras">Compras</span>
+                                {% elif usuario.perfil == "estoque" %}
+                                    <span class="badge-estoque">Estoque</span>
+                                {% elif usuario.perfil == "loja" %}
+                                    <span class="badge-loja">Loja — {{ usuario.loja_nome or 'sem vínculo' }}</span>
+                                {% else %}
+                                    <span class="badge-producao">Produção</span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <form
+                                    method="POST"
+                                    action="/usuarios/trocar-senha/{{ usuario.id }}"
+                                    class="form-senha"
+                                >
+                                    <input
+                                        type="password"
+                                        name="nova_senha"
+                                        placeholder="Nova senha"
+                                        required
+                                    >
+
+                                    <button type="submit" class="btn-mini">
+                                        Alterar
+                                    </button>
+                                </form>
+                            </td>
+
+                            <td>
+                                {% if usuario.usuario != session.usuario %}
+                                <form
+                                    method="POST"
+                                    action="/usuarios/excluir/{{ usuario.id }}"
+                                    onsubmit="return confirm('Tem certeza que deseja excluir este usuário?');"
+                                >
+                                    <button type="submit" class="btn-excluir">
+                                        Excluir
+                                    </button>
+                                </form>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                {% else %}
+
+                <div class="mensagem-erro">
+                    Nenhum usuário cadastrado.
+                </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <div class="botoes-metas">
+            <a href="/dashboard" class="btn-link-avulsas">
+                Voltar para o Sistema
+            </a>
+        </div>
+
+    </div>
+
+<script>
+const perfilUsuario = document.getElementById('perfil');
+const campoLoja = document.getElementById('campo-loja-usuario');
+function atualizarCampoLoja(){ campoLoja.style.display = perfilUsuario.value === 'loja' ? 'flex' : 'none'; }
+perfilUsuario.addEventListener('change', atualizarCampoLoja); atualizarCampoLoja();
+</script>
+</body>
+</html>

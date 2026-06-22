@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Planejamento #{{ planejamento.id }} - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container container-clean">
+        {% include '_menu.html' %}
+
+        <section class="dashboard-resumo modulo-hero-clean">
+            <div>
+                <span class="eyebrow">Produção • Planejamento #{{ planejamento.id }}</span>
+                <h1>Planejamento de Produção</h1>
+                <p>Consumo previsto congelado pelas versões das fichas técnicas usadas.</p>
+            </div>
+        </section>
+
+        {% if request.args.get('mensagem') %}<div class="mensagem-sucesso">{{ request.args.get('mensagem') }}</div>{% endif %}
+        {% if request.args.get('erro') %}<div class="mensagem-erro">{{ request.args.get('erro') }}</div>{% endif %}
+
+        <div class="painel-produto-detalhes planejamento-resumo-grid">
+            <div class="card-detalhe-produto"><span>Status</span><strong>{{ planejamento.status }}</strong></div>
+            <div class="card-detalhe-produto"><span>Cenário</span><strong>{{ planejamento.cenario }}</strong></div>
+            <div class="card-detalhe-produto"><span>Dia</span><strong>{{ planejamento.dia_semana }}</strong></div>
+            <div class="card-detalhe-produto"><span>Total</span><strong>{{ "%.0f"|format(planejamento.total_unidades or 0) }} un</strong></div>
+            <div class="card-detalhe-produto"><span>Separação</span><strong>{{ separacao.status if separacao else 'Não criada' }}</strong></div>
+        </div>
+
+        <div class="info-resumo info-resumo-planejamento">
+            <p><strong>Criado em:</strong> {{ planejamento.data_criacao }}</p>
+            <p><strong>Criado por:</strong> {{ planejamento.criado_por }}</p>
+            <p><strong>Tabuleiros:</strong> {{ "%.2f"|format(planejamento.total_tabuleiros or 0) }}</p>
+            {% if planejamento.producao_realizada_id %}
+            <p><strong>Pré-produção:</strong> #{{ planejamento.producao_realizada_id }}</p>
+            {% endif %}
+        </div>
+
+        {% if planejamento.status == 'Com alertas' %}
+        <div class="mensagem-aviso">
+            Este planejamento possui itens sem ficha, unidade incompatível ou composição incompleta. Revise os alertas antes de usar a lista de separação.
+        </div>
+        {% endif %}
+
+        <div class="painel-acoes-ficha planejamento-acoes">
+            {% if planejamento.producao_realizada_id %}
+            <a href="/producao-realizada/{{ planejamento.producao_realizada_id }}" class="btn-link-metas">Abrir pré-produção</a>
+            {% endif %}
+            {% if separacao %}
+            <a href="/estoque/separacoes/{{ separacao.id }}" class="btn-link-metas">Abrir separação do estoque</a>
+            {% endif %}
+            <button type="button" onclick="window.print()" class="btn-imprimir">Imprimir planejamento</button>
+            <a href="/planejamentos-producao" class="btn-link-avulsas">Voltar à lista</a>
+            {% if planejamento.status in ['Rascunho', 'Com alertas'] %}
+            <form method="POST" action="/planejamentos-producao/{{ planejamento.id }}/cancelar"
+                  onsubmit="return confirm('Cancelar este planejamento e a pré-produção vinculada?');">
+                <button type="submit" class="btn-excluir">Cancelar planejamento</button>
+            </form>
+            {% endif %}
+        </div>
+
+        <section class="card-usuario planejamento-secao">
+            <div class="secao-cabecalho-planejamento">
+                <div>
+                    <span class="eyebrow">Ordem prevista</span>
+                    <h2>Produtos acabados</h2>
+                </div>
+            </div>
+            <div class="tabela-responsiva">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Tabuleiros</th>
+                            <th>Unidades</th>
+                            <th>Ficha congelada</th>
+                            <th>Status</th>
+                            <th>Alerta</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in itens %}
+                        <tr>
+                            <td class="nome-sabor">{{ item.produto_codigo or '-' }} - {{ item.produto_nome or ('Empada de ' ~ item.sabor) }}</td>
+                            <td>{{ "%.2f"|format(item.quantidade_tabuleiros or 0) }}</td>
+                            <td class="producao">{{ "%.2f"|format(item.quantidade_unidades or 0) }} {{ item.produto_unidade or 'un' }}</td>
+                            <td>{% if item.ficha_id %}<span class="badge-versao">v{{ item.versao_ficha }}</span>{% else %}-{% endif %}</td>
+                            <td>
+                                {% if item.status == 'Planejado' %}
+                                <span class="badge-status status-ok">Planejado</span>
+                                {% else %}
+                                <span class="badge-status status-aviso">Alerta</span>
+                                {% endif %}
+                            </td>
+                            <td class="texto-alerta-planejamento">{{ item.alerta or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="card-usuario planejamento-secao">
+            <div class="secao-cabecalho-planejamento">
+                <div>
+                    <span class="eyebrow">Cocção e preparação</span>
+                    <h2>Produções intermediárias previstas</h2>
+                    <p>Massas, recheios e preparações que precisam ser produzidos antes da montagem.</p>
+                </div>
+            </div>
+            {% if intermediarios %}
+            <div class="tabela-responsiva">
+                <table>
+                    <thead><tr><th>Código</th><th>Produto intermediário</th><th>Categoria</th><th>Quantidade prevista</th><th>Observação</th></tr></thead>
+                    <tbody>
+                        {% for item in intermediarios %}
+                        <tr>
+                            <td>{{ item.produto_codigo }}</td>
+                            <td class="nome-sabor">{{ item.produto_nome }}</td>
+                            <td>{{ item.categoria_nome or '-' }}</td>
+                            <td class="producao">{{ "%.4f"|format(item.quantidade_total or 0) }} {{ item.unidade }}</td>
+                            <td>{{ item.alerta or 'Preparar conforme ficha técnica congelada.' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="mensagem-sucesso">Nenhuma produção intermediária foi identificada.</div>
+            {% endif %}
+        </section>
+
+        <section class="card-usuario planejamento-secao lista-separacao-print">
+            <div class="secao-cabecalho-planejamento">
+                <div>
+                    <span class="eyebrow">Estoque / Almoxarifado</span>
+                    <h2>Lista consolidada de separação</h2>
+                    <p>Insumos básicos previstos. Esta lista não baixa saldo e deve ser conferida fisicamente.</p>
+                </div>
+            </div>
+            {% if insumos %}
+            <div class="tabela-responsiva">
+                <table>
+                    <thead><tr><th>Código</th><th>Insumo</th><th>Categoria</th><th>Quantidade a separar</th><th>Alerta</th></tr></thead>
+                    <tbody>
+                        {% for item in insumos %}
+                        <tr>
+                            <td>{{ item.produto_codigo }}</td>
+                            <td class="nome-sabor">{{ item.produto_nome }}</td>
+                            <td>{{ item.categoria_nome or '-' }}</td>
+                            <td class="producao">{{ "%.4f"|format(item.quantidade_total or 0) }} {{ item.unidade }}</td>
+                            <td>{{ item.alerta or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="mensagem-aviso">Nenhum insumo básico foi calculado. Confira se as fichas possuem componentes ativos.</div>
+            {% endif %}
+        </section>
+
+        <details class="card-usuario planejamento-detalhamento">
+            <summary>Ver explosão técnica detalhada</summary>
+            <p class="texto-ajuda texto-ajuda-clean">Mostra de qual produto e de qual nível da ficha veio cada quantidade.</p>
+            {% if consumos_detalhados %}
+            <div class="tabela-responsiva">
+                <table>
+                    <thead><tr><th>Sabor</th><th>Nível</th><th>Tipo</th><th>Produto</th><th>Quantidade</th><th>Caminho técnico</th><th>Versão origem</th></tr></thead>
+                    <tbody>
+                        {% for item in consumos_detalhados %}
+                        <tr>
+                            <td>{{ item.sabor }}</td>
+                            <td>{{ item.nivel }}</td>
+                            <td>{{ item.tipo }}</td>
+                            <td class="nome-sabor">{{ item.produto_codigo }} - {{ item.produto_nome }}</td>
+                            <td>{{ "%.4f"|format(item.quantidade or 0) }} {{ item.unidade }}</td>
+                            <td class="caminho-tecnico">{{ item.caminho }}</td>
+                            <td><span class="badge-versao">v{{ item.versao_ficha_origem or '-' }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </details>
+    </div>
+</body>
+</html>

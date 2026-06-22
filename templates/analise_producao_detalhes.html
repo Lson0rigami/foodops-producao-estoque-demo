@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Análise da Produção #{{ analise.producao.id }} - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean analise-producao-pagina">
+    {% include '_menu.html' %}
+
+    <section class="dashboard-resumo modulo-hero-clean">
+        <div>
+            <span class="eyebrow">Produção #{{ analise.producao.id }} • Planejamento #{{ analise.producao.planejamento_id or '-' }}</span>
+            <h1>Previsto x Realizado</h1>
+            <p>Comparativo operacional da produção acabada, consumo real e perdas registradas.</p>
+        </div>
+    </section>
+
+    <div class="info-resumo">
+        <p><strong>Data:</strong> {{ analise.producao.data_criacao }}</p>
+        <p><strong>Cenário:</strong> {{ analise.producao.cenario }}</p>
+        <p><strong>Dia:</strong> {{ analise.producao.dia_semana }}</p>
+        <p><strong>Produção:</strong> {{ analise.producao.status }}</p>
+        <p><strong>Situação:</strong> {{ analise.situacao }}</p>
+    </div>
+
+    <div class="botoes-metas no-print">
+        <a href="/analises-producao" class="btn-link-avulsas">Voltar às análises</a>
+        <a href="/producao-realizada/{{ analise.producao.id }}" class="btn-link-metas">Abrir produção</a>
+        {% if analise.producao.planejamento_id %}
+        <a href="/planejamentos-producao/{{ analise.producao.planejamento_id }}" class="btn-link-metas">Abrir planejamento</a>
+        {% endif %}
+        <button type="button" onclick="window.print()" class="btn-imprimir">Imprimir análise</button>
+    </div>
+
+    {% if not analise.planejamento %}
+    <div class="mensagem-aviso">Esta produção não possui planejamento vinculado e não pode ser comparada automaticamente.</div>
+    {% else %}
+
+    {% if analise.situacao != 'Comparativo disponível' %}
+    <div class="mensagem-aviso">
+        {{ analise.situacao }}. Os números apresentados refletem apenas os registros existentes até agora e podem mudar após novas confirmações.
+    </div>
+    {% endif %}
+
+    <div class="analise-indicadores">
+        <article class="analise-indicador">
+            <span>Produtos conformes</span>
+            <strong>{{ analise.indicadores.produtos_conformes }}</strong>
+        </article>
+        <article class="analise-indicador {% if analise.indicadores.produtos_divergentes %}indicador-alerta{% endif %}">
+            <span>Produtos divergentes</span>
+            <strong>{{ analise.indicadores.produtos_divergentes }}</strong>
+        </article>
+        <article class="analise-indicador">
+            <span>Consumos conformes</span>
+            <strong>{{ analise.indicadores.consumos_conformes }}</strong>
+        </article>
+        <article class="analise-indicador {% if analise.indicadores.consumos_divergentes %}indicador-alerta{% endif %}">
+            <span>Consumos divergentes</span>
+            <strong>{{ analise.indicadores.consumos_divergentes }}</strong>
+        </article>
+        <article class="analise-indicador {% if analise.indicadores.itens_com_perda %}indicador-perda{% endif %}">
+            <span>Itens com perda</span>
+            <strong>{{ analise.indicadores.itens_com_perda }}</strong>
+        </article>
+    </div>
+
+    <section class="card-usuario analise-secao">
+        <div class="cabecalho-card-flex">
+            <div>
+                <h2>Produção acabada</h2>
+                <p class="texto-ajuda texto-ajuda-clean">Compara as unidades planejadas com as unidades efetivamente confirmadas no estoque de produtos acabados.</p>
+            </div>
+        </div>
+
+        {% if analise.produtos %}
+        <div class="tabela-responsiva">
+            <table class="tabela-analise">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Previsto</th>
+                        <th>Realizado</th>
+                        <th>Diferença</th>
+                        <th>Variação</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for item in analise.produtos %}
+                    <tr>
+                        <td class="nome-sabor">{% if item.produto_codigo %}{{ item.produto_codigo }} - {% endif %}{{ item.produto_nome }}</td>
+                        <td>{{ "%.4f"|format(item.previsto) }} {{ item.unidade }}</td>
+                        <td>{{ "%.4f"|format(item.realizado) }} {{ item.unidade }}</td>
+                        <td class="{% if item.diferenca > 0 %}valor-acima{% elif item.diferenca < 0 %}valor-abaixo{% else %}valor-conforme{% endif %}">
+                            {{ "%+.4f"|format(item.diferenca) }} {{ item.unidade }}
+                        </td>
+                        <td>{% if item.percentual is not none %}{{ "%+.2f"|format(item.percentual) }}%{% else %}-{% endif %}</td>
+                        <td><span class="badge-variacao variacao-{{ item.status_variacao|lower|replace(' ', '-')|replace('ã', 'a') }}">{{ item.status_variacao }}</span></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="mensagem-aviso">Não existem produtos acabados para comparar.</div>
+        {% endif %}
+
+        {% if analise.resumo_produtos %}
+        <div class="resumo-unidades-analise">
+            {% for resumo in analise.resumo_produtos %}
+            <div><strong>{{ resumo.unidade }}</strong><span>Previsto {{ "%.4f"|format(resumo.previsto) }} • Real {{ "%.4f"|format(resumo.realizado) }} • Dif. {{ "%+.4f"|format(resumo.diferenca) }}</span></div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </section>
+
+    <section class="card-usuario analise-secao">
+        <div class="cabecalho-card-flex">
+            <div>
+                <h2>Consumo de componentes</h2>
+                <p class="texto-ajuda texto-ajuda-clean">O comparativo principal usa a quantidade utilizada. Perdas são exibidas separadamente para não esconder desperdícios.</p>
+            </div>
+            <div class="mini-status-consumos">
+                <span>{{ analise.consumos_confirmados }} confirmado(s)</span>
+                {% if analise.consumos_rascunho %}<span>{{ analise.consumos_rascunho }} rascunho(s)</span>{% endif %}
+            </div>
+        </div>
+
+        {% if analise.consumos %}
+        <div class="tabela-responsiva">
+            <table class="tabela-analise tabela-analise-consumos">
+                <thead>
+                    <tr>
+                        <th>Componente</th>
+                        <th>Tipo</th>
+                        <th>Previsto</th>
+                        <th>Recebido</th>
+                        <th>Utilizado</th>
+                        <th>Perda</th>
+                        <th>Devolvido</th>
+                        <th>Dif. uso</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for item in analise.consumos %}
+                    <tr>
+                        <td class="nome-sabor">
+                            {% if item.produto_codigo %}{{ item.produto_codigo }} - {% endif %}{{ item.produto_nome }}
+                            <br><small>{{ item.categoria_nome }}</small>
+                        </td>
+                        <td>{{ item.tipos }}</td>
+                        <td>{{ "%.4f"|format(item.previsto) }} {{ item.unidade }}</td>
+                        <td>{{ "%.4f"|format(item.recebido) }} {{ item.unidade }}</td>
+                        <td>{{ "%.4f"|format(item.utilizado) }} {{ item.unidade }}</td>
+                        <td class="{% if item.perda > 0 %}valor-perda{% endif %}">{{ "%.4f"|format(item.perda) }} {{ item.unidade }}</td>
+                        <td>{{ "%.4f"|format(item.devolvido) }} {{ item.unidade }}</td>
+                        <td class="{% if item.diferenca_utilizada > 0 %}valor-acima{% elif item.diferenca_utilizada < 0 %}valor-abaixo{% else %}valor-conforme{% endif %}">
+                            {{ "%+.4f"|format(item.diferenca_utilizada) }} {{ item.unidade }}
+                            {% if item.percentual is not none %}<br><small>{{ "%+.2f"|format(item.percentual) }}%</small>{% endif %}
+                        </td>
+                        <td><span class="badge-variacao variacao-{{ item.status_variacao|lower|replace(' ', '-')|replace('ã', 'a') }}">{{ item.status_variacao }}</span></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="mensagem-aviso">Não existem consumos previstos ou reais para comparar.</div>
+        {% endif %}
+
+        {% if analise.resumo_consumos %}
+        <div class="resumo-unidades-analise">
+            {% for resumo in analise.resumo_consumos %}
+            <div>
+                <strong>{{ resumo.unidade }}</strong>
+                <span>
+                    Prev. {{ "%.4f"|format(resumo.previsto) }} •
+                    Usado {{ "%.4f"|format(resumo.utilizado) }} •
+                    Perda {{ "%.4f"|format(resumo.perda) }} •
+                    Dif. {{ "%+.4f"|format(resumo.diferenca_utilizada) }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </section>
+    {% endif %}
+</div>
+</body>
+</html>

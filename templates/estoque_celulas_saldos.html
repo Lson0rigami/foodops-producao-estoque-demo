@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Saldos por Célula - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+<div class="container container-clean">
+    {% include '_menu.html' %}
+
+    <section class="dashboard-resumo modulo-hero-clean">
+        <div>
+            <span class="eyebrow">Estoque • Células</span>
+            <h1>Saldos por Célula</h1>
+            <p>O estoque central e cada célula possuem saldos separados. Consumos, perdas e devoluções alteram apenas a célula correspondente.</p>
+        </div>
+    </section>
+
+    <form method="GET" class="card-usuario filtros-grade">
+        <div class="campo-form">
+            <label>Buscar produto</label>
+            <input type="text" name="busca" value="{{ busca }}" placeholder="Código ou nome">
+        </div>
+        <div class="campo-form">
+            <label>Célula</label>
+            <select name="celula_id">
+                <option value="">Todas</option>
+                {% for celula in celulas %}<option value="{{ celula.id }}" {% if celula_id == celula.id|string %}selected{% endif %}>{{ celula.nome }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="campo-form">
+            <label>Categoria</label>
+            <select name="categoria_id">
+                <option value="">Todas</option>
+                {% for categoria in categorias %}<option value="{{ categoria.id }}" {% if categoria_id == categoria.id|string %}selected{% endif %}>{{ categoria.nome }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="campo-form campo-acao-final"><button type="submit">Filtrar</button></div>
+    </form>
+
+    <section class="card-usuario">
+        <div class="botoes-metas">
+            <a href="/estoque/transferencias/nova" class="btn-link-metas">Nova transferência</a>
+            <a href="/estoque/celulas" class="btn-link-metas">Gerenciar células</a>
+            <a href="/estoque" class="btn-link-avulsas">Voltar</a>
+        </div>
+
+        {% if saldos %}
+        <div class="tabela-responsiva">
+            <table>
+                <thead><tr><th>Célula</th><th>Produto</th><th>Categoria</th><th>Saldo na célula</th></tr></thead>
+                <tbody>
+                {% for item in saldos %}
+                <tr>
+                    <td class="nome-sabor">{{ item.celula_nome }}</td>
+                    <td>{{ item.produto_codigo }} - {{ item.produto_nome }}</td>
+                    <td>{{ item.categoria_nome or '-' }}</td>
+                    <td class="producao">{{ '%.4f'|format(item.saldo or 0) }} {{ item.unidade }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="mensagem-aviso">Nenhuma célula possui saldo para os filtros informados.</div>
+        {% endif %}
+    </section>
+</div>
+</body>
+</html>

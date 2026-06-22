@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Estoque - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container container-clean">
+        {% include '_menu.html' %}
+
+        <section class="dashboard-resumo">
+            <div>
+                <span class="eyebrow">Módulo</span>
+                <h1>Estoque</h1>
+                <p>Controle produtos oficiais, entradas, saídas, saldos e histórico de movimentações.</p>
+            </div>
+        </section>
+
+        <div class="dashboard-grid dashboard-grid-clean">
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon">P</span>
+                    <span class="badge-modulo">Cadastro</span>
+                </div>
+                <h2>Produtos</h2>
+                <p>Cadastre os produtos oficiais do estoque para evitar erro de digitação em entradas.</p>
+                <a href="/estoque/produtos" class="btn-primary-clean">Gerenciar produtos</a>
+                <div class="links-secundarios"><span>{{ total_produtos }} produtos cadastrados</span></div>
+            </article>
+
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon">S</span>
+                    <span class="badge-modulo">Saldo</span>
+                </div>
+                <h2>Saldo atual</h2>
+                <p>Veja o saldo calculado por entradas e saídas, com alerta de estoque mínimo.</p>
+                <a href="/estoque/saldo" class="btn-primary-clean">Ver saldo</a>
+                <div class="links-secundarios"><span>{{ total_baixo }} produtos baixos</span></div>
+            </article>
+
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon">M</span>
+                    <span class="badge-modulo">Movimento</span>
+                </div>
+                <h2>Movimentações</h2>
+                <p>Registre entradas manuais, saídas para produção, ajustes, perdas e inventário.</p>
+                <a href="/estoque/movimentacao" class="btn-primary-clean">Nova movimentação</a>
+                <div class="links-secundarios"><a href="/estoque/historico">Histórico</a><a href="/estoque/categorias">Categorias</a></div>
+            </article>
+
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon">L</span>
+                    <span class="badge-modulo">Separação</span>
+                </div>
+                <h2>Listas de separação</h2>
+                <p>Confira os insumos previstos pelos planejamentos e registre quanto foi separado fisicamente.</p>
+                <a href="/estoque/separacoes" class="btn-primary-clean">Abrir separações</a>
+                <div class="links-secundarios"><span>{{ total_separacoes }} pendentes ou parciais</span></div>
+            </article>
+
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon">C</span>
+                    <span class="badge-modulo">Células</span>
+                </div>
+                <h2>Células e transferências</h2>
+                <p>Envie materiais do estoque central para os setores produtivos e acompanhe o saldo de cada célula.</p>
+                <a href="/estoque/transferencias" class="btn-primary-clean">Abrir transferências</a>
+                <div class="links-secundarios">
+                    <a href="/estoque/celulas">Gerenciar células</a>
+                    <a href="/estoque/celulas/saldos">Saldos por célula</a>
+                    <span>{{ total_transferencias }} rascunhos</span>
+                </div>
+            </article>
+
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon">I</span>
+                    <span class="badge-modulo">Interno</span>
+                </div>
+                <h2>Solicitações internas</h2>
+                <p>Separe e confirme materiais solicitados por setores e células de produção.</p>
+                <a href="/solicitacoes-internas" class="btn-primary-clean">Abrir solicitações</a>
+                <div class="links-secundarios">
+                    <span>{{ total_solicitacoes_internas }} pendente(s)</span>
+                    <a href="/solicitacoes-internas/relatorio">Custos por setor</a>
+                </div>
+            </article>
+
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon">V</span>
+                    <span class="badge-modulo">Validade</span>
+                </div>
+                <h2>Lotes e validades</h2>
+                <p>Consulte produtos por lote, data de produção, vencimento, local e saldo controlado.</p>
+                <a href="/validade" class="btn-primary-clean">Abrir validades</a>
+                <div class="links-secundarios">
+                    <span>{{ resumo_validade.alertas }} alertas</span>
+                    <a href="/validade/novo">Novo lote manual</a>
+                </div>
+            </article>
+
+            <article class="dashboard-card dashboard-card-clean"><div class="card-topo-clean"><span class="modulo-icon">R</span><span class="badge-modulo">Auditoria</span></div><h2>Rastreabilidade e perdas</h2><p>Consulte o caminho dos lotes e analise descartes e perdas por motivo, produto e célula.</p><a href="/rastreabilidade" class="btn-primary-clean">Abrir rastreabilidade</a><div class="links-secundarios"><a href="/perdas">Relatório de perdas</a></div></article>
+
+            {% if session.perfil in ['admin', 'estoque'] %}
+            <article class="dashboard-card dashboard-card-clean">
+                <div class="card-topo-clean">
+                    <span class="modulo-icon">R</span>
+                    <span class="badge-modulo">Consumo</span>
+                </div>
+                <h2>Consumo das células</h2>
+                <p>Acompanhe consumo real, perdas, devoluções e saldos remanescentes por produção.</p>
+                <a href="/consumos-producao" class="btn-primary-clean">Abrir consumos reais</a>
+            </article>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

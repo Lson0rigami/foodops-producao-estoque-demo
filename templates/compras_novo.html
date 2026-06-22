@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Nova Solicitação de Compra</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container">
+        {% include '_menu.html' %}
+
+        <h1>Nova Solicitação de Compra</h1>
+
+        {% if mensagem_erro %}
+        <div class="mensagem-erro">{{ mensagem_erro }}</div>
+        {% endif %}
+
+        <div class="info-resumo">
+            <p><strong>Fluxo:</strong> solicite os itens necessários e o setor de compras confirma depois com fornecedor e data.</p>
+        </div>
+
+        <form method="POST" action="/compras/novo">
+            <div class="card-usuario">
+                <h2>Itens do Pedido</h2>
+
+                <div id="itens-compra">
+                    <div class="linha-item-compra">
+                        <div class="campo-form campo-descricao-compra">
+                            <label>Descrição</label>
+                            <input type="text" name="descricao[]" placeholder="Ex: Peito de Frango" required>
+                        </div>
+
+                        <div class="campo-form campo-qtd-compra">
+                            <label>Qtd</label>
+                            <input type="number" step="0.01" min="0.01" name="quantidade[]" value="1" required>
+                        </div>
+
+                        <div class="campo-form campo-unidade-compra">
+                            <label>Unidade</label>
+                            <select name="unidade[]">
+                                {% for unidade in unidades %}
+                                <option value="{{ unidade }}">{{ unidade }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="campo-form campo-categoria-compra">
+                            <label>Categoria</label>
+                            <select name="categoria_id[]" required>
+                                <option value="">Selecione</option>
+                                {% for categoria in categorias %}
+                                <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="campo-form campo-observacao-compra">
+                            <label>Observação</label>
+                            <input type="text" name="observacao_item[]" placeholder="Opcional">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="btn-salvar-producao" onclick="adicionarItemCompra()">Adicionar Item</button>
+            </div>
+
+            <div class="card-usuario">
+                <h2>Observação do Pedido</h2>
+                <div class="campo-form">
+                    <label>Observação geral</label>
+                    <input type="text" name="observacao_pedido" class="input-largo" placeholder="Opcional">
+                </div>
+            </div>
+
+            <div class="botoes-metas">
+                <button type="submit" class="btn-salvar-producao">Salvar Solicitação</button>
+                <a href="/compras/pedidos" class="btn-link-metas">Ver Pedidos</a>
+                <a href="/dashboard" class="btn-link-avulsas">Voltar</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function adicionarItemCompra() {
+            const container = document.getElementById("itens-compra");
+            const primeiro = container.querySelector(".linha-item-compra");
+            const novo = primeiro.cloneNode(true);
+
+            novo.querySelectorAll("input").forEach(function(input) {
+                if (input.name === "quantidade[]") {
+                    input.value = "1";
+                } else {
+                    input.value = "";
+                }
+            });
+
+            novo.querySelectorAll("select").forEach(function(select) {
+                select.selectedIndex = 0;
+            });
+
+            container.appendChild(novo);
+        }
+    </script>
+</body>
+</html>

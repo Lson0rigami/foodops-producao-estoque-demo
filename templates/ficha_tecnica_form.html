@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Nova Ficha Técnica - FoodOps Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='ui-v2.css') }}">
+</head>
+<body>
+    <div class="container container-clean">
+        {% include '_menu.html' %}
+
+        <section class="dashboard-resumo modulo-hero-clean">
+            <div>
+                <span class="eyebrow">Produção • Nova receita técnica</span>
+                <h1>Nova Ficha Técnica</h1>
+                <p>Escolha o produto final e defina o rendimento base. Depois você adiciona os insumos da composição.</p>
+            </div>
+        </section>
+
+        {% if mensagem_erro %}
+        <div class="mensagem-erro">{{ mensagem_erro }}</div>
+        {% endif %}
+
+        <div class="card-usuario">
+            <h2>Dados da ficha</h2>
+            <form method="POST" action="/fichas-tecnicas/nova" class="form-cadastro-simples form-grid-5">
+                <div class="campo-form campo-grid-span-2">
+                    <label for="produto_final_id">Produto final:</label>
+                    <select name="produto_final_id" id="produto_final_id" required>
+                        <option value="">Selecione...</option>
+                        {% for produto in produtos %}
+                        <option value="{{ produto.id }}">{{ produto.codigo }} - {{ produto.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="campo-form">
+                    <label for="tipo">Tipo:</label>
+                    <select name="tipo" id="tipo">
+                        <option value="Produto acabado">Produto acabado</option>
+                        <option value="Recheio">Recheio</option>
+                        <option value="Massa">Massa</option>
+                        <option value="Preparação">Preparação</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+
+                <div class="campo-form">
+                    <label for="rendimento_quantidade">Rendimento:</label>
+                    <input type="number" step="0.01" min="0.01" name="rendimento_quantidade" id="rendimento_quantidade" value="1" required>
+                </div>
+
+                <div class="campo-form">
+                    <label for="rendimento_unidade">Unidade:</label>
+                    <select name="rendimento_unidade" id="rendimento_unidade">
+                        <option value="un">un</option>
+                        <option value="kg">kg</option>
+                        <option value="g">g</option>
+                        <option value="L">L</option>
+                        <option value="ml">ml</option>
+                        <option value="tabuleiro">tabuleiro</option>
+                        <option value="receita">receita</option>
+                    </select>
+                </div>
+
+                <div class="campo-form campo-grid-span-5">
+                    <label for="observacao">Observação:</label>
+                    <input type="text" name="observacao" id="observacao" placeholder="Ex: ficha base importada do Esigma ou conferida pela produção">
+                </div>
+
+                <button type="submit" class="btn-salvar-producao">Criar ficha</button>
+                <a href="/fichas-tecnicas" class="btn-link-avulsas">Voltar</a>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
