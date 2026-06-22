@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Local database and backups
+*.db
+*.sqlite
+*.sqlite3
+backups/
+backup*/
+backup_visual*/
+backups_v*/
+
+# Local/demo generated files
+instance/
+.env
+.env.*
+*.log
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Test/cache
+.pytest_cache/
+.coverage
+htmlcov/
