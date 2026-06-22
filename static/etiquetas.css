@@ -1,0 +1,167 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: white;
+}
+
+.barra {
+    padding: 15px;
+    background: white;
+    border-bottom: 1px solid #ccc;
+    text-align: center;
+}
+
+.barra h1 {
+    margin: 0 0 10px 0;
+}
+
+button {
+    padding: 10px 15px;
+    background: #198754;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+a {
+    margin-left: 15px;
+    text-decoration: none;
+    font-weight: bold;
+    color: #2d7df6;
+}
+
+.folha-etiquetas {
+    margin: 0;
+    padding: 0;
+}
+
+.etiqueta {
+    width: 60mm;
+    height: 40mm;
+    box-sizing: border-box;
+    padding: 3mm;
+    background: white;
+    overflow: hidden;
+    page-break-after: always;
+    break-after: page;
+}
+
+.empresa {
+    font-size: 10px;
+    text-align: center;
+    font-weight: bold;
+    border-bottom: 1px solid #000;
+    padding-bottom: 1.5mm;
+}
+
+.sabor {
+    font-size: 20px;
+    text-align: center;
+    font-weight: bold;
+    margin: 2mm 0;
+    text-transform: uppercase;
+    line-height: 1.1;
+}
+
+.linha {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    margin-bottom: 1mm;
+}
+
+.lote {
+    font-size: 8px;
+    text-align: center;
+    margin-top: 1mm;
+    border-top: 1px solid #000;
+    padding-top: 1mm;
+}
+
+.etiqueta-controle {
+    border: 1px solid #000;
+}
+
+.controle-titulo {
+    font-size: 16px;
+    margin: 2mm 0;
+}
+
+.controle-desc {
+    text-align: center;
+    font-size: 11px;
+    font-weight: bold;
+    margin-bottom: 2mm;
+}
+
+.misto-titulo {
+    font-size: 18px;
+    margin: 2mm 0;
+}
+
+.misto-linha {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    border-bottom: 1px solid #000;
+    padding: 1mm 0;
+    margin-bottom: 1mm;
+}
+
+.misto-linha strong {
+    max-width: 38mm;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+@media print {
+    @page {
+        size: 60mm 40mm;
+        margin: 0;
+    }
+
+    html,
+    body {
+        width: 60mm;
+        height: 40mm;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white;
+        overflow: hidden;
+    }
+
+    .barra {
+        display: none;
+    }
+
+    .folha-etiquetas {
+        width: 60mm;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block;
+    }
+
+    .etiqueta {
+        width: 60mm;
+        height: 40mm;
+        margin: 0 !important;
+        padding: 3mm;
+        border: none;
+        box-sizing: border-box;
+        overflow: hidden;
+
+        page-break-after: always;
+        page-break-before: avoid;
+        page-break-inside: avoid;
+
+        break-after: page;
+        break-before: avoid;
+        break-inside: avoid;
+
+        transform: rotate(90deg);
+        transform-origin: center center;
+    }
+}
